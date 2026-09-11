@@ -9,13 +9,15 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class EntityTab implements Tab {
     public final int priority;
@@ -35,8 +37,8 @@ public class EntityTab implements Tab {
 
     @Override
     public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
-        player.connection.send(ServerboundInteractPacket.createInteractionPacket(entity, sneakInteract, player.getUsedItemHand()));
-        if (sneakInteract) player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
+        player.connection.send(new ServerboundInteractPacket(entity.getId(), player.getUsedItemHand(), Vec3.ZERO, sneakInteract));
+        if (sneakInteract) player.connection.send(new ServerboundPlayerInputPacket(Input.EMPTY));
     }
 
     @Override

@@ -11,9 +11,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
@@ -47,7 +48,7 @@ public class ItemTab implements Tab {
             ItemStack inSwappedSlot = player.getInventory().getItem(swappedSlot);
             if (ItemStack.matches(inSwappedSlot, swappedStack)) {
                 int slotIndex = handler.findSlot(player.getInventory(), swappedSlot).getAsInt();
-                interactionManager.handleContainerInput(handler.containerId, slotIndex, player.getInventory().selected, ContainerInput.SWAP, player);
+                interactionManager.handleContainerInput(handler.containerId, slotIndex, player.getInventory().getSelectedSlot(), ContainerInput.SWAP, player);
             }
         }
     }
@@ -55,15 +56,15 @@ public class ItemTab implements Tab {
     @Override
     public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
         int slotIndex = handler.findSlot(player.getInventory(), slot).getAsInt();
-        if (slotIndex != player.getInventory().selected) interactionManager.handleContainerInput(handler.containerId, slotIndex, player.getInventory().selected, ContainerInput.SWAP, player);
-        if (sneakInteract) player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY));
+        if (slotIndex != player.getInventory().getSelectedSlot()) interactionManager.handleContainerInput(handler.containerId, slotIndex, player.getInventory().getSelectedSlot(), ContainerInput.SWAP, player);
+        if (sneakInteract) player.connection.send(new ServerboundPlayerInputPacket(new Input(false, false, false, false, false, true, false)));
         interactionManager.useItem(player, InteractionHand.MAIN_HAND);
-        if (sneakInteract) player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
-        if (unique && slotIndex != player.getInventory().selected) HandlerSlotUtil.mainHandSwapSlot = slot; // Can't swap back for non-uniques
+        if (sneakInteract) player.connection.send(new ServerboundPlayerInputPacket(Input.EMPTY));
+        if (unique && slotIndex != player.getInventory().getSelectedSlot()) HandlerSlotUtil.mainHandSwapSlot = slot; // Can't swap back for non-uniques
         if (!unique) {
             this.swappedSlot = this.slot;
             this.swappedStack = player.getInventory().getItem(this.slot);
-            this.slot = player.getInventory().selected;
+            this.slot = player.getInventory().getSelectedSlot();
         }
     }
 
@@ -74,7 +75,7 @@ public class ItemTab implements Tab {
         if (player == null) return true;
         if (!player.getInventory().getItem(slot).equals(stack)) return true;
         if (preclusions.values().stream().anyMatch(p -> p.test(stack))) return true;
-        if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> hs && hs.getMenu().findSlot(player.getInventory(), slot).isEmpty()) return true;
+        if (Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> hs && hs.getMenu().findSlot(player.getInventory(), slot).isEmpty()) return true;
         return false;
     }
 

@@ -68,7 +68,7 @@ public abstract class MixinHandledScreen extends Screen implements InventoryTabs
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     public void keyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> callbackInfo) {
         if (!inventoryTabs$allowTabs) return;
-        if (TabManager.keyPressed(event.key(), event.scancode(), event.modifiers())) {
+        if (TabManager.keyPressed(event)) {
             callbackInfo.setReturnValue(true);
             callbackInfo.cancel();
         }

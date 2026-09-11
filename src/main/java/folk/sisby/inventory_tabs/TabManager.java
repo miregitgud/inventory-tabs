@@ -20,6 +20,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -169,7 +170,7 @@ public class TabManager {
             }
         }
         // Hand Guesses
-        for (int slot : List.of(client.player.getInventory().selected, Inventory.SLOT_OFFHAND)) {
+        for (int slot : List.of(client.player.getInventory().getSelectedSlot(), Inventory.SLOT_OFFHAND)) {
             for (Tab tab : tabs) {
                 if (tab instanceof ItemTab it) {
                     if (slot == it.slot) {
@@ -240,15 +241,15 @@ public class TabManager {
         return tabPositions.isEmpty() || !getPageButton(true).contains((int) mouseX, (int) mouseY) && !getPageButton(false).contains((int) mouseX, (int) mouseY) && tabPositions.stream().noneMatch(pos -> getTabArea(pos).contains((int) mouseX, (int) mouseY));
     }
 
-    public static boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (InventoryTabs.TOGGLE_TABS.matches(keyCode, scanCode)) {
+    public static boolean keyPressed(KeyEvent event) {
+        if (InventoryTabs.TOGGLE_TABS.matches(event)) {
             enabled = !enabled;
             if (!enabled) Minecraft.getInstance().gui.toastManager().addToast(new ControlHintToast(Component.translatable("toast.inventory_tabs.disabled.title").withStyle(ChatFormatting.BOLD), InventoryTabs.TOGGLE_TABS));
         }
         if (isHidden() || isLocked()) return false;
-        if (holdTabCooldown <= 0 && InventoryTabs.NEXT_TAB.matches(keyCode, scanCode)) {
+        if (holdTabCooldown <= 0 && InventoryTabs.NEXT_TAB.matches(event)) {
             holdTabCooldown = InventoryTabs.CONFIG.holdTabCooldown;
-            if (Screen.hasShiftDown()) {
+            if (event.hasShiftDown()) {
                 if (tabs.indexOf(currentTab) == 0) {
                     openTab(tabs.get(tabs.size() - 1));
                 } else {

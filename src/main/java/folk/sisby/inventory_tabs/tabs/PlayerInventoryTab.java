@@ -19,12 +19,12 @@ public class PlayerInventoryTab implements Tab {
 
     public PlayerInventoryTab() {
         itemStack = new ItemStack(Blocks.PLAYER_HEAD);
-        itemStack.set(DataComponents.PROFILE, new ResolvableProfile(Minecraft.getInstance().player.getGameProfile()));
+        itemStack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(Minecraft.getInstance().player.getGameProfile()));
     }
 
     @Override
     public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
-        Minecraft.getInstance().setScreen(new InventoryScreen(player));
+        Minecraft.getInstance().setScreenAndShow(new InventoryScreen(player));
     }
 
     @Override

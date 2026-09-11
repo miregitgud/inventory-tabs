@@ -54,7 +54,7 @@ public class BlockTab implements Tab {
     @Override
     public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
         if (InventoryTabs.CONFIG.rotatePlayer) player.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(pos));
-        interactionManager.useItemOn(player, InteractionHand.MAIN_HAND, new BlockHitResult(pos.getCenter(), Direction.EAST, pos, false));
+        interactionManager.useItemOn(player, InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(pos), Direction.EAST, pos, false));
     }
 
     @Override
@@ -77,7 +77,7 @@ public class BlockTab implements Tab {
     }
 
     protected void refreshPreviewAtPos(Level world, BlockPos previewPos) {
-        List<ItemFrame> itemFrames = world.getEntitiesOfClass(ItemFrame.class, new AABB(previewPos.getCenter(), previewPos.getCenter()).inflate(0.6, 0.3, 0.6));
+        List<ItemFrame> itemFrames = world.getEntitiesOfClass(ItemFrame.class, new AABB(Vec3.atCenterOf(previewPos), Vec3.atCenterOf(previewPos)).inflate(0.6, 0.3, 0.6));
         if (!itemFrames.isEmpty()) {
             itemStack = itemFrames.get(0).getItem();
             if (!itemStack.getHoverName().equals(itemStack.getItem().getName(itemStack))) hoverText = itemStack.getHoverName().copy().withStyle(ChatFormatting.ITALIC);

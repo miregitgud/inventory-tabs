@@ -38,9 +38,9 @@ public abstract class MixinGenericContainerScreen extends AbstractContainerScree
     @Inject(method = "<init>", at = @At("TAIL"))
     public void containerTextHeight(ChestMenu handler, Inventory inventory, Component title, CallbackInfo ci) {
         if (containerRows == 6 && InventoryTabs.CONFIG.compactLargeContainers) {
-            this.imageHeight -= 30;
+            ((HandledScreenAccessor) this).setImageHeight(this.imageHeight - 30);
         } else {
-            this.imageHeight -= 2;
+            ((HandledScreenAccessor) this).setImageHeight(this.imageHeight - 2);
             this.inventoryLabelY = this.imageHeight - 94;
         }
     }

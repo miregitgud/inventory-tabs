@@ -27,7 +27,7 @@ public abstract class MixinShulkerBoxScreen extends AbstractContainerScreen<Ches
 
     @Inject(method = "<init>", at = @At("TAIL"))
     public void containerTextHeight(ShulkerBoxMenu handler, Inventory inventory, Component title, CallbackInfo ci) {
-        this.imageHeight -= 1;
+        ((HandledScreenAccessor) this).setImageHeight(this.imageHeight - 1);
         this.inventoryLabelY = this.imageHeight - 94;
     }
 

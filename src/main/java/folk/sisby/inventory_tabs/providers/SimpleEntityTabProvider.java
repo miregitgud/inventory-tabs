@@ -2,7 +2,7 @@ package folk.sisby.inventory_tabs.providers;
 
 import folk.sisby.inventory_tabs.InventoryTabs;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecartContainer;
 
 public class SimpleEntityTabProvider extends EntityTabProvider {
     public SimpleEntityTabProvider() {

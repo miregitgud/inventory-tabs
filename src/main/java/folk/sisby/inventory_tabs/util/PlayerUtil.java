@@ -21,7 +21,7 @@ public class PlayerUtil {
     public static final double BLOCK_REACH_SQUARE = REACH * REACH;
 
     public static boolean inRange(Player player, BlockPos pos) {
-        if (pos.getCenter().distanceToSqr(player.getEyePosition()) > BLOCK_REACH_SQUARE) return false;
+        if (Vec3.atCenterOf(pos).distanceToSqr(player.getEyePosition()) > BLOCK_REACH_SQUARE) return false;
         BlockHitResult result = raycast(player, pos);
         return pos.equals(result.getBlockPos());
     }

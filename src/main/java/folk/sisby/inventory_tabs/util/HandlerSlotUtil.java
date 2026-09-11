@@ -41,7 +41,7 @@ public class HandlerSlotUtil {
             handler.findSlot(player.getInventory(), mainHandSwapSlot).ifPresent((screenSlot) -> manager.handleContainerInput(
                     handler.containerId,
                     screenSlot,
-                    player.getInventory().selected,
+                    player.getInventory().getSelectedSlot(),
                     ContainerInput.SWAP,
                     player
             ));
