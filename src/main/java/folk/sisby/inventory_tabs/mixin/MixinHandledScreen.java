@@ -41,11 +41,6 @@ public abstract class MixinHandledScreen extends Screen implements InventoryTabs
         TabManager.initScreen(minecraft, self);
     }
 
-    @Inject(method = "extractRenderState", at = @At("TAIL"))
-    protected void render(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (!inventoryTabs$allowTabs) return;
-        TabManager.render(drawContext, mouseX, mouseY);
-    }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     public void mouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> callbackInfo) {
