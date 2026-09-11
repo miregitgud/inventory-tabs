@@ -22,8 +22,8 @@ public class MixinKeyBinding {
 	@Shadow @Final private static Map<String, KeyMapping> ALL;
 	@Unique private static final Multimap<InputConstants.Key, KeyMapping> KEYS_TO_BINDINGS = ArrayListMultimap.create();
 
-	@Inject(method = "<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V", at = @At("TAIL"))
-	private void saveConflictedBinds(String translationKey, InputConstants.Type type, int code, KeyMapping.Category category, CallbackInfo ci) {
+	@Inject(method = "<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V", at = @At("TAIL"))
+	private void saveConflictedBinds(String translationKey, InputConstants.Type type, int code, KeyMapping.Category category, int order, CallbackInfo ci) {
 		KEYS_TO_BINDINGS.put(key, (KeyMapping) (Object) this);
 	}
 

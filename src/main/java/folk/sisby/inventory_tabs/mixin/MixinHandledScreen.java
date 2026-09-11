@@ -29,8 +29,8 @@ public abstract class MixinHandledScreen extends Screen implements InventoryTabs
         super(title);
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void checkSupported(AbstractContainerMenu handler, Inventory inventory, Component title, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/world/inventory/AbstractContainerMenu;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;II)V", at = @At("TAIL"))
+    private void checkSupported(AbstractContainerMenu handler, Inventory inventory, Component title, int imageWidth, int imageHeight, CallbackInfo ci) {
         inventoryTabs$allowTabs = ScreenSupport.allowTabs(this);
     }
     
@@ -81,7 +81,7 @@ public abstract class MixinHandledScreen extends Screen implements InventoryTabs
         }
     }
 
-	@ModifyExpressionValue(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;getDisplayName()Lnet/minecraft/network/chat/Component;"))
+	@ModifyExpressionValue(method = "<init>(Lnet/minecraft/world/inventory/AbstractContainerMenu;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;II)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;getDisplayName()Lnet/minecraft/network/chat/Component;"))
 	private Component removeCompactPlayerInventoryTitle(Component original) {
 		AbstractContainerScreen<?> self = (AbstractContainerScreen<?>) (Object) this;
 		if (InventoryTabs.CONFIG.compactLargeContainers && self.getMenu() instanceof ChestMenu gcsh && gcsh.getRowCount() == 6) {
