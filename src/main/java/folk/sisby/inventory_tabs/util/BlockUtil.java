@@ -1,14 +1,13 @@
 package folk.sisby.inventory_tabs.util;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class BlockUtil {
     public static List<BlockPos> getBlocksInRadius(BlockPos center, int radius) {
@@ -23,13 +22,13 @@ public class BlockUtil {
         return outList;
     }
 
-    public static <T> List<T> getAttachedBlocks(World world, BlockPos pos, BiFunction<World, BlockPos, T> mapper) {
+    public static <T> List<T> getAttachedBlocks(Level world, BlockPos pos, BiFunction<Level, BlockPos, T> mapper) {
         List<T> outList = new ArrayList<>();
-        for (Direction direction : Direction.Type.HORIZONTAL) {
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
             if (!direction.getAxis().isHorizontal()) continue;
-            BlockPos attachedPos = pos.offset(direction, 1);
+            BlockPos attachedPos = pos.relative(direction, 1);
             BlockState attachedState = world.getBlockState(attachedPos);
-            if (attachedState.contains(Properties.HORIZONTAL_FACING) && attachedState.get(Properties.HORIZONTAL_FACING) == direction) {
+            if (attachedState.hasProperty(BlockStateProperties.HORIZONTAL_FACING) && attachedState.getValue(BlockStateProperties.HORIZONTAL_FACING) == direction) {
                 T mappedValue = mapper.apply(world, attachedPos);
                 if (mappedValue != null) outList.add(mappedValue);
             }

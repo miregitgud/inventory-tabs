@@ -1,44 +1,44 @@
 package folk.sisby.inventory_tabs.tabs;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 
 public class PlayerInventoryTab implements Tab {
-    public static final Text TITLE = Text.translatable("gui.inventory_tabs.tab.inventory");
+    public static final Component TITLE = Component.translatable("gui.inventory_tabs.tab.inventory");
     public ItemStack itemStack;
 
     public PlayerInventoryTab() {
         itemStack = new ItemStack(Blocks.PLAYER_HEAD);
-        itemStack.set(DataComponentTypes.PROFILE, new ProfileComponent(MinecraftClient.getInstance().player.getGameProfile()));
+        itemStack.set(DataComponents.PROFILE, new ResolvableProfile(Minecraft.getInstance().player.getGameProfile()));
     }
 
     @Override
-    public void open(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager) {
-        MinecraftClient.getInstance().setScreen(new InventoryScreen(player));
+    public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
+        Minecraft.getInstance().setScreen(new InventoryScreen(player));
     }
 
     @Override
-    public void close(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager) {
-        if (player != null) player.playerScreenHandler.setCursorStack(ItemStack.EMPTY);
+    public void close(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
+        if (player != null) player.inventoryMenu.setCarried(ItemStack.EMPTY);
     }
 
     @Override
-    public boolean shouldBeRemoved(World world, boolean current) {
+    public boolean shouldBeRemoved(Level world, boolean current) {
         return false;
     }
 
     @Override
-    public Text getHoverText() {
+    public Component getHoverText() {
         return TITLE;
     }
 

@@ -1,14 +1,14 @@
 package folk.sisby.inventory_tabs.providers;
 
 import folk.sisby.inventory_tabs.InventoryTabs;
-import net.minecraft.block.AnvilBlock;
-import net.minecraft.block.CartographyTableBlock;
-import net.minecraft.block.CraftingTableBlock;
-import net.minecraft.block.GrindstoneBlock;
-import net.minecraft.block.LoomBlock;
-import net.minecraft.block.StonecutterBlock;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AnvilBlock;
+import net.minecraft.world.level.block.CartographyTableBlock;
+import net.minecraft.world.level.block.CraftingTableBlock;
+import net.minecraft.world.level.block.GrindstoneBlock;
+import net.minecraft.world.level.block.LoomBlock;
+import net.minecraft.world.level.block.StonecutterBlock;
 
 public class UniqueBlockTabProvider extends BlockTabProvider {
     public UniqueBlockTabProvider() {
@@ -22,7 +22,7 @@ public class UniqueBlockTabProvider extends BlockTabProvider {
     }
 
     @Override
-    public int getTabOrderPriority(World world, BlockPos pos) {
+    public int getTabOrderPriority(Level world, BlockPos pos) {
         return 20;
     }
 

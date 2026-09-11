@@ -5,13 +5,15 @@ import folk.sisby.inventory_tabs.InventoryTabs;
 import folk.sisby.inventory_tabs.ScreenSupport;
 import folk.sisby.inventory_tabs.TabManager;
 import folk.sisby.inventory_tabs.duck.InventoryTabsScreen;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,71 +21,71 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public abstract class MixinHandledScreen extends Screen implements InventoryTabsScreen {
     @Unique Boolean inventoryTabs$allowTabs = false;
 
-    protected MixinHandledScreen(Text title) {
+    protected MixinHandledScreen(Component title) {
         super(title);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void checkSupported(ScreenHandler handler, PlayerInventory inventory, Text title, CallbackInfo ci) {
+    private void checkSupported(AbstractContainerMenu handler, Inventory inventory, Component title, CallbackInfo ci) {
         inventoryTabs$allowTabs = ScreenSupport.allowTabs(this);
     }
     
     @Inject(method = "init", at = @At("RETURN"))
     private void init(CallbackInfo callbackInfo) {
         if (!inventoryTabs$allowTabs) return;
-        HandledScreen<?> self = (HandledScreen<?>) (Object) this;
-        TabManager.initScreen(client, self);
+        AbstractContainerScreen<?> self = (AbstractContainerScreen<?>) (Object) this;
+        TabManager.initScreen(minecraft, self);
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    protected void render(DrawContext drawContext, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    protected void render(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (!inventoryTabs$allowTabs) return;
         TabManager.render(drawContext, mouseX, mouseY);
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    public void mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> callbackInfo) {
+    public void mouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> callbackInfo) {
         if (!inventoryTabs$allowTabs) return;
-        if (TabManager.mouseClicked(mouseX, mouseY, button)) {
+        if (TabManager.mouseClicked(event.x(), event.y(), event.button())) {
             callbackInfo.setReturnValue(true);
             callbackInfo.cancel();
         }
     }
 
     @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
-    public void mouseReleased(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> callbackInfo) {
+    public void mouseReleased(MouseButtonEvent event, CallbackInfoReturnable<Boolean> callbackInfo) {
         if (!inventoryTabs$allowTabs) return;
-        if (TabManager.mouseReleased(mouseX, mouseY, button)) {
+        if (TabManager.mouseReleased(event.x(), event.y(), event.button())) {
             callbackInfo.setReturnValue(true);
             callbackInfo.cancel();
         }
     }
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    public void keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> callbackInfo) {
+    public void keyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> callbackInfo) {
         if (!inventoryTabs$allowTabs) return;
-        if (TabManager.keyPressed(keyCode, scanCode, modifiers)) {
+        if (TabManager.keyPressed(event.key(), event.scancode(), event.modifiers())) {
             callbackInfo.setReturnValue(true);
             callbackInfo.cancel();
         }
     }
 
-    @Inject(method = "isClickOutsideBounds", at = @At("RETURN"), cancellable = true)
-    protected void isClickOutsideBounds(double mouseX, double mouseY, int left, int top, int button, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "hasClickedOutside", at = @At("RETURN"), cancellable = true)
+    protected void isClickOutsideBounds(double mouseX, double mouseY, int left, int top, CallbackInfoReturnable<Boolean> cir) {
         if (inventoryTabs$allowTabs && cir.getReturnValue()) {
             cir.setReturnValue(TabManager.isClickOutsideBounds(mouseX, mouseY));
         }
     }
 
-	@ModifyExpressionValue(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getDisplayName()Lnet/minecraft/text/Text;"))
-	private Text removeCompactPlayerInventoryTitle(Text original) {
-		HandledScreen<?> self = (HandledScreen<?>) (Object) this;
-		if (InventoryTabs.CONFIG.compactLargeContainers && self.getScreenHandler() instanceof GenericContainerScreenHandler gcsh && gcsh.getRows() == 6) {
-			return Text.empty();
+	@ModifyExpressionValue(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;getDisplayName()Lnet/minecraft/network/chat/Component;"))
+	private Component removeCompactPlayerInventoryTitle(Component original) {
+		AbstractContainerScreen<?> self = (AbstractContainerScreen<?>) (Object) this;
+		if (InventoryTabs.CONFIG.compactLargeContainers && self.getMenu() instanceof ChestMenu gcsh && gcsh.getRowCount() == 6) {
+			return Component.empty();
 		}
 		return original;
 	}

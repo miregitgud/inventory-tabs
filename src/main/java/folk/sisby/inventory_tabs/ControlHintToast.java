@@ -1,44 +1,53 @@
 package folk.sisby.inventory_tabs;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.toast.Toast;
-import net.minecraft.client.toast.ToastManager;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.toasts.Toast;
+import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public class ControlHintToast implements Toast {
-    private static final Identifier TEXTURE = Identifier.of("toast/advancement");
-    protected Text title;
-    protected Text keyHint;
-    protected KeyBinding keyBinding;
+    private static final Identifier TEXTURE = Identifier.parse("toast/advancement");
+    protected Component title;
+    protected Component keyHint;
+    protected KeyMapping keyBinding;
     protected int titleWidth;
     protected int hintWidth;
+    private Visibility wantedVisibility = Visibility.SHOW;
 
-    public ControlHintToast(Text title, KeyBinding keybinding) {
+    public ControlHintToast(Component title, KeyMapping keybinding) {
         this.title = title;
         this.keyBinding = keybinding;
-        keyHint = Text.translatable("toast.inventory_tabs.disabled.key_hint", keyBinding.getBoundKeyLocalizedText().copy().formatted(Formatting.YELLOW)).formatted(Formatting.BLUE);
-        titleWidth = MinecraftClient.getInstance().textRenderer.getWidth(title);
-        hintWidth = MinecraftClient.getInstance().textRenderer.getWidth(keyHint);
+        keyHint = Component.translatable("toast.inventory_tabs.disabled.key_hint", keyBinding.getTranslatedKeyMessage().copy().withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.BLUE);
+        titleWidth = Minecraft.getInstance().font.width(title);
+        hintWidth = Minecraft.getInstance().font.width(keyHint);
     }
 
+    @Override
+    public Visibility getWantedVisibility() {
+        return this.wantedVisibility;
+    }
 
     @Override
-    public Visibility draw(DrawContext context, ToastManager manager, long elapsedTime) {
-        context.drawGuiTexture(TEXTURE, 0, 0, getWidth(), getHeight());
-        context.drawText(manager.getClient().textRenderer, title, (getWidth() - titleWidth) / 2, 7, 0xFFFFFF, false);
-        context.drawText(manager.getClient().textRenderer, keyHint, (getWidth() - hintWidth) / 2, 18, 0xFFFFFF, false);
-
+    public void update(ToastManager manager, long elapsedTime) {
         double time = 2000 * manager.getNotificationDisplayTimeMultiplier();
-
-        return elapsedTime >= time ? Visibility.HIDE : Visibility.SHOW;
+        this.wantedVisibility = elapsedTime >= time ? Visibility.HIDE : Visibility.SHOW;
     }
 
     @Override
-    public int getWidth() {
+    public void extractRenderState(GuiGraphicsExtractor extractor, Font font, long elapsedTime) {
+        extractor.blitSprite(RenderPipelines.GUI_TEXTURED, TEXTURE, 0, 0, width(), height());
+        extractor.text(font, title, (width() - titleWidth) / 2, 7, 0xFFFFFF, false);
+        extractor.text(font, keyHint, (width() - hintWidth) / 2, 18, 0xFFFFFF, false);
+    }
+
+    @Override
+    public int width() {
         return Math.max(titleWidth, hintWidth) + 24;
     }
 }

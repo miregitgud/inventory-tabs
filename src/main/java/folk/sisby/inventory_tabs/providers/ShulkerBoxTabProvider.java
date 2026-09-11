@@ -2,10 +2,10 @@ package folk.sisby.inventory_tabs.providers;
 
 import folk.sisby.inventory_tabs.InventoryTabs;
 import folk.sisby.inventory_tabs.mixin.ShulkerBoxBlockAccessor;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.block.entity.ShulkerBoxBlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 
 public class ShulkerBoxTabProvider extends BlockTabProvider {
     public ShulkerBoxTabProvider() {
@@ -15,7 +15,7 @@ public class ShulkerBoxTabProvider extends BlockTabProvider {
     }
 
     @Override
-    public int getTabOrderPriority(World world, BlockPos pos) {
+    public int getTabOrderPriority(Level world, BlockPos pos) {
         return -50;
     }
 

@@ -1,24 +1,23 @@
 package folk.sisby.inventory_tabs.tabs;
 
 import folk.sisby.inventory_tabs.util.HandlerSlotUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class ItemTab implements Tab {
     public final ItemStack stack;
@@ -42,40 +41,40 @@ public class ItemTab implements Tab {
     }
 
     @Override
-    public void close(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager) {
+    public void close(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
         if (player == null) return;
         if (swappedSlot != -1) {
-            ItemStack inSwappedSlot = player.getInventory().getStack(swappedSlot);
-            if (ItemStack.areEqual(inSwappedSlot, swappedStack)) {
-                int slotIndex = handler.getSlotIndex(player.getInventory(), swappedSlot).getAsInt();
-                interactionManager.clickSlot(handler.syncId, slotIndex, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
+            ItemStack inSwappedSlot = player.getInventory().getItem(swappedSlot);
+            if (ItemStack.matches(inSwappedSlot, swappedStack)) {
+                int slotIndex = handler.findSlot(player.getInventory(), swappedSlot).getAsInt();
+                interactionManager.handleContainerInput(handler.containerId, slotIndex, player.getInventory().selected, ContainerInput.SWAP, player);
             }
         }
     }
 
     @Override
-    public void open(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager) {
-        int slotIndex = handler.getSlotIndex(player.getInventory(), slot).getAsInt();
-        if (slotIndex != player.getInventory().selectedSlot) interactionManager.clickSlot(handler.syncId, slotIndex, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
-        if (sneakInteract) player.networkHandler.sendPacket(new ClientCommandC2SPacket(player, ClientCommandC2SPacket.Mode.PRESS_SHIFT_KEY));
-        interactionManager.interactItem(player, Hand.MAIN_HAND);
-        if (sneakInteract) player.networkHandler.sendPacket(new ClientCommandC2SPacket(player, ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY));
-        if (unique && slotIndex != player.getInventory().selectedSlot) HandlerSlotUtil.mainHandSwapSlot = slot; // Can't swap back for non-uniques
+    public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
+        int slotIndex = handler.findSlot(player.getInventory(), slot).getAsInt();
+        if (slotIndex != player.getInventory().selected) interactionManager.handleContainerInput(handler.containerId, slotIndex, player.getInventory().selected, ContainerInput.SWAP, player);
+        if (sneakInteract) player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY));
+        interactionManager.useItem(player, InteractionHand.MAIN_HAND);
+        if (sneakInteract) player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
+        if (unique && slotIndex != player.getInventory().selected) HandlerSlotUtil.mainHandSwapSlot = slot; // Can't swap back for non-uniques
         if (!unique) {
             this.swappedSlot = this.slot;
-            this.swappedStack = player.getInventory().getStack(this.slot);
-            this.slot = player.getInventory().selectedSlot;
+            this.swappedStack = player.getInventory().getItem(this.slot);
+            this.slot = player.getInventory().selected;
         }
     }
 
     @Override
-    public boolean shouldBeRemoved(World world, boolean current) {
+    public boolean shouldBeRemoved(Level world, boolean current) {
         if (current) return false;
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return true;
-        if (!player.getInventory().getStack(slot).equals(stack)) return true;
+        if (!player.getInventory().getItem(slot).equals(stack)) return true;
         if (preclusions.values().stream().anyMatch(p -> p.test(stack))) return true;
-        if (MinecraftClient.getInstance().currentScreen instanceof HandledScreen<?> hs && hs.getScreenHandler().getSlotIndex(player.getInventory(), slot).isEmpty()) return true;
+        if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> hs && hs.getMenu().findSlot(player.getInventory(), slot).isEmpty()) return true;
         return false;
     }
 
@@ -85,8 +84,8 @@ public class ItemTab implements Tab {
     }
 
     @Override
-    public Text getHoverText() {
-        return !stack.getName().equals(stack.getItem().getName(stack)) ? stack.getName().copy().formatted(Formatting.ITALIC) : stack.getName();
+    public Component getHoverText() {
+        return !stack.getHoverName().equals(stack.getItem().getName(stack)) ? stack.getHoverName().copy().withStyle(ChatFormatting.ITALIC) : stack.getHoverName();
     }
 
     @Override

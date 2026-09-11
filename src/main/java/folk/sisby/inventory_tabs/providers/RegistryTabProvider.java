@@ -1,12 +1,11 @@
 package folk.sisby.inventory_tabs.providers;
 
-import net.minecraft.util.Identifier;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import net.minecraft.resources.Identifier;
 
 public abstract class RegistryTabProvider<T> implements TabProvider {
     public final Set<T> values = new HashSet<>();

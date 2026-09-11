@@ -3,7 +3,7 @@
 	"minVersion": "0.8",
 	"package": "folk.sisby.inventory_tabs.mixin",
 	"plugin": "folk.sisby.inventory_tabs.mixin.InventoryTabsPlugin",
-	"compatibilityLevel": "JAVA_16",
+	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"HandledScreenAccessor",
 		"MixinGenericContainerScreen",

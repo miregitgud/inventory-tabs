@@ -8,7 +8,7 @@ plugins {
 }
 
 version = "$baseVersion+$branch"
-archivesBaseName = project.slug
+base.archivesName = project.slug
 
 repositories {
 	maven { url "https://repo.sleeping.town/" }
@@ -19,10 +19,9 @@ dependencies {
 	include libs.kaleidoConfig
 
 	minecraft libs.mc
-	mappings variantOf(libs.yarn) { classifier "v2" }
-	modImplementation libs.fl
+	implementation libs.fl
 
-	modImplementation libs.fapi
+	implementation libs.fapi
 }
 
 processResources {
@@ -49,18 +48,18 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
-	it.options.release = 17
+	it.options.release = 25
 }
 
 java {
 	withSourcesJar()
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${archivesBaseName}" }
+		rename { "${it}_${base.archivesName.get()}" }
 	}
 }
 
@@ -86,7 +85,7 @@ githubRelease {
 	repo = slug
 	tagName = "v${baseVersion}+${tagBranch}"
 	targetCommitish = tagBranch
-	releaseAssets = remapJar
+	releaseAssets = jar
 	releaseName = "v${baseVersion}"
 	allowUploadToExisting = true
 	generateReleaseNotes = true
@@ -97,7 +96,7 @@ modrinth {
 	token = "$System.env.MODRINTH_TOKEN"
 	projectId = slug
 	versionNumber = project.version
-	uploadFile = remapJar
+	uploadFile = jar
 	gameVersions = compatibleVersions.split(", ").toList()
 	loaders = compatibleLoaders.split(", ").toList()
 	changelog = !file("CHANGELOG.md").exists() ? "" : rootProject.file("CHANGELOG.md").text + "\n\nChangelog: https://github.com/${user}/${slug}/releases/tag/v${baseVersion}+${tagBranch}"

@@ -1,12 +1,12 @@
 package folk.sisby.inventory_tabs.providers;
 
 import folk.sisby.inventory_tabs.InventoryTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.vehicle.StorageMinecartEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
 
 public class SimpleEntityTabProvider extends EntityTabProvider {
     public SimpleEntityTabProvider() {
-        warmMatches.put(InventoryTabs.id("storage_minecart_entity"), e -> e instanceof StorageMinecartEntity);
+        warmMatches.put(InventoryTabs.id("storage_minecart_entity"), e -> e instanceof AbstractMinecartContainer);
     }
 
     @Override

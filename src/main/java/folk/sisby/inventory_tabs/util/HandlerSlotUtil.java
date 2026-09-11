@@ -1,64 +1,48 @@
 package folk.sisby.inventory_tabs.util;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.SlotActionType;
-
-import java.util.Map;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
 
 public class HandlerSlotUtil {
     public static int stashSlot = -1;
     public static int mainHandSwapSlot = -1;
 
-    public static void push(ClientPlayerEntity player, ClientPlayerInteractionManager manager, ScreenHandler handler, boolean doClient) {
-        if (!handler.getCursorStack().isEmpty()) {
-            stashSlot = player.getInventory().getEmptySlot();
+    public static void push(LocalPlayer player, MultiPlayerGameMode manager, AbstractContainerMenu handler, boolean doClient) {
+        if (!handler.getCarried().isEmpty()) {
+            stashSlot = player.getInventory().getFreeSlot();
             if (stashSlot != -1) {
-                handler.getSlotIndex(player.getInventory(), stashSlot).ifPresent((screenSlot) -> {
-                    if (doClient) {
-                        manager.clickSlot(
-                                handler.syncId,
-                                screenSlot,
-                                0,
-                                SlotActionType.PICKUP,
-                                player
-                        );
-                    } else {
-                        player.networkHandler.sendPacket(new ClickSlotC2SPacket(
-                                handler.syncId,
-                                handler.getRevision(),
-                                screenSlot,
-                                0,
-                                SlotActionType.PICKUP,
-                                handler.getSlot(screenSlot).getStack().copy(),
-                                new Int2ObjectOpenHashMap<>(Map.of(screenSlot, handler.getCursorStack().copy()))
-                        ));
-                    }
+                handler.findSlot(player.getInventory(), stashSlot).ifPresent((screenSlot) -> {
+                    manager.handleContainerInput(
+                            handler.containerId,
+                            screenSlot,
+                            0,
+                            ContainerInput.PICKUP,
+                            player
+                    );
                 });
             }
         }
     }
 
-    public static void tryPop(ClientPlayerEntity player, ClientPlayerInteractionManager manager, ScreenHandler handler) {
+    public static void tryPop(LocalPlayer player, MultiPlayerGameMode manager, AbstractContainerMenu handler) {
         if (stashSlot != -1) {
-            handler.getSlotIndex(player.getInventory(), stashSlot).ifPresent((screenSlot) -> manager.clickSlot(
-                    handler.syncId,
+            handler.findSlot(player.getInventory(), stashSlot).ifPresent((screenSlot) -> manager.handleContainerInput(
+                    handler.containerId,
                     screenSlot,
                     0, // Mouse Left Click
-                    SlotActionType.PICKUP,
+                    ContainerInput.PICKUP,
                     player
             ));
             stashSlot = -1;
         }
         if (mainHandSwapSlot != -1) {
-            handler.getSlotIndex(player.getInventory(), mainHandSwapSlot).ifPresent((screenSlot) -> manager.clickSlot(
-                    handler.syncId,
+            handler.findSlot(player.getInventory(), mainHandSwapSlot).ifPresent((screenSlot) -> manager.handleContainerInput(
+                    handler.containerId,
                     screenSlot,
-                    player.getInventory().selectedSlot,
-                    SlotActionType.SWAP,
+                    player.getInventory().selected,
+                    ContainerInput.SWAP,
                     player
             ));
             mainHandSwapSlot = -1;

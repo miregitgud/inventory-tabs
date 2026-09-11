@@ -1,35 +1,34 @@
 package folk.sisby.inventory_tabs.util;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.enums.ChestType;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.ChestType;
 
 public class ChestUtil {
-    public static boolean isDouble(World world, BlockPos pos) {
+    public static boolean isDouble(Level world, BlockPos pos) {
         BlockState blockState = world.getBlockState(pos);
-        return blockState.contains(Properties.CHEST_TYPE) && blockState.get(ChestBlock.CHEST_TYPE) != ChestType.SINGLE;
+        return blockState.hasProperty(BlockStateProperties.CHEST_TYPE) && blockState.getValue(ChestBlock.TYPE) != ChestType.SINGLE;
     }
 
-    public static BlockPos getOtherChestBlockPos(World world, BlockPos pos) {
+    public static BlockPos getOtherChestBlockPos(Level world, BlockPos pos) {
         BlockState blockState = world.getBlockState(pos);
-        if (blockState.get(ChestBlock.CHEST_TYPE) == ChestType.LEFT) return pos.offset(blockState.get(ChestBlock.FACING).rotateYClockwise());
-        return pos.offset(blockState.get(ChestBlock.FACING).rotateYCounterclockwise());
+        if (blockState.getValue(ChestBlock.TYPE) == ChestType.LEFT) return pos.relative(blockState.getValue(ChestBlock.FACING).getClockWise());
+        return pos.relative(blockState.getValue(ChestBlock.FACING).getCounterClockWise());
     }
 
-    public static List<BlockPos> getChestMultiblockPos(World world, BlockPos pos) {
+    public static List<BlockPos> getChestMultiblockPos(Level world, BlockPos pos) {
         BlockState blockState = world.getBlockState(pos);
-        if (!blockState.contains(Properties.CHEST_TYPE) || blockState.get(ChestBlock.CHEST_TYPE) == ChestType.SINGLE) return List.of(pos);
+        if (!blockState.hasProperty(BlockStateProperties.CHEST_TYPE) || blockState.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return List.of(pos);
         List<BlockPos> list = new ArrayList<>();
         list.add(pos);
         list.add(getOtherChestBlockPos(world, pos));
-        if (blockState.contains(Properties.CHEST_TYPE) && blockState.get(ChestBlock.CHEST_TYPE) == ChestType.RIGHT) Collections.reverse(list);
+        if (blockState.hasProperty(BlockStateProperties.CHEST_TYPE) && blockState.getValue(ChestBlock.TYPE) == ChestType.RIGHT) Collections.reverse(list);
         return list;
     }
 }

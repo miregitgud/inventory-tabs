@@ -2,24 +2,24 @@ package folk.sisby.inventory_tabs.tabs;
 
 import folk.sisby.inventory_tabs.util.DrawUtil;
 import folk.sisby.inventory_tabs.util.WidgetPosition;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.util.math.Rect2i;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public interface Tab {
     Identifier[] TABS_TEXTURE = new Identifier[]{
-            Identifier.ofVanilla("textures/gui/sprites/container/creative_inventory/tab_top_unselected_2.png"),
-            Identifier.ofVanilla("textures/gui/sprites/container/creative_inventory/tab_top_selected_2.png"),
-            Identifier.ofVanilla("textures/gui/sprites/container/creative_inventory/tab_bottom_unselected_2.png"),
-            Identifier.ofVanilla("textures/gui/sprites/container/creative_inventory/tab_bottom_selected_2.png")
+            Identifier.withDefaultNamespace("textures/gui/sprites/container/creative_inventory/tab_top_unselected_2.png"),
+            Identifier.withDefaultNamespace("textures/gui/sprites/container/creative_inventory/tab_top_selected_2.png"),
+            Identifier.withDefaultNamespace("textures/gui/sprites/container/creative_inventory/tab_bottom_unselected_2.png"),
+            Identifier.withDefaultNamespace("textures/gui/sprites/container/creative_inventory/tab_bottom_selected_2.png")
     };
     int TEXTURE_WIDTH = 26;
     int TEXTURE_HEIGHT = 32;
@@ -34,12 +34,12 @@ public interface Tab {
     /**
      * Opens the screen associated with the tab.
      */
-    void open(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager);
+    void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager);
 
     /**
      * @return true if the tab should stop being displayed. Should be synced up with the provider that provides this tab.
      */
-    boolean shouldBeRemoved(World world, boolean current);
+    boolean shouldBeRemoved(Level world, boolean current);
 
     /**
      * @return the stack to render as an icon in the default rendering method.
@@ -49,12 +49,12 @@ public interface Tab {
     /**
      * @return the text that's displayed when hovering over the tab.
      */
-    Text getHoverText();
+    Component getHoverText();
 
     /**
      * Called when the screen associated with the tab is closed (for handlers that aren't destroyed when closed on the servers)
      */
-    default void close(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager) {
+    default void close(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
     }
 
     /**
@@ -80,7 +80,7 @@ public interface Tab {
         return false;
     }
 
-    default void render(DrawContext drawContext, WidgetPosition pos, int width, int height, double mouseX, double mouseY, boolean current) {
+    default void render(GuiGraphicsExtractor drawContext, WidgetPosition pos, int width, int height, double mouseX, double mouseY, boolean current) {
         int type = pos.up ? (!current ? 0 : 1) : (!current ? 2 : 3);
         int y = pos.y + (pos.up ? -height : 0);
         int drawHeight = height + HEIGHT_OFFSET[type];
@@ -89,9 +89,9 @@ public interface Tab {
         int itemPadding = Math.max(0, (width - 16) / 2);
         int itemX = pos.x + itemPadding;
         int itemY = y + itemPadding + ITEM_Y_OFFSET[type];
-        drawContext.drawItem(getTabIcon(), itemX, itemY);
+        drawContext.item(getTabIcon(), itemX, itemY);
         if (new Rect2i(itemX, itemY, 16, 16).contains((int) mouseX, (int) mouseY)) {
-            drawContext.drawTooltip(MinecraftClient.getInstance().textRenderer, getHoverText(), (int) mouseX, (int) mouseY);
+            drawContext.setTooltipForNextFrame(Minecraft.getInstance().font, getHoverText(), (int) mouseX, (int) mouseY);
         }
     }
 }

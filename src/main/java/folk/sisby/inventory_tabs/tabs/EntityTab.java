@@ -1,22 +1,21 @@
 package folk.sisby.inventory_tabs.tabs;
 
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 
 public class EntityTab implements Tab {
     public final int priority;
@@ -30,18 +29,18 @@ public class EntityTab implements Tab {
         this.entity = entity;
         this.preclusions = preclusions;
         this.sneakInteract = sneakInteract;
-        this.itemStack = entity.getPickBlockStack() != null ? entity.getPickBlockStack() : Items.BARRIER.getDefaultStack();
+        this.itemStack = entity.getPickResult() != null ? entity.getPickResult() : Items.BARRIER.getDefaultInstance();
         refreshPreviewStack();
     }
 
     @Override
-    public void open(ClientPlayerEntity player, ClientWorld world, ScreenHandler handler, ClientPlayerInteractionManager interactionManager) {
-        player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interact(entity, sneakInteract, player.getActiveHand()));
-        if (sneakInteract) player.networkHandler.sendPacket(new ClientCommandC2SPacket(player, ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY));
+    public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
+        player.connection.send(ServerboundInteractPacket.createInteractionPacket(entity, sneakInteract, player.getUsedItemHand()));
+        if (sneakInteract) player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY));
     }
 
     @Override
-    public boolean shouldBeRemoved(World world, boolean current) {
+    public boolean shouldBeRemoved(Level world, boolean current) {
         if (current) return false;
         return preclusions.values().stream().anyMatch(p -> p.test(entity));
     }
@@ -52,8 +51,8 @@ public class EntityTab implements Tab {
     }
 
     @Override
-    public Text getHoverText() {
-        return entity.hasCustomName() ? entity.getCustomName().copy().formatted(Formatting.ITALIC) : entity.getName();
+    public Component getHoverText() {
+        return entity.hasCustomName() ? entity.getCustomName().copy().withStyle(ChatFormatting.ITALIC) : entity.getName();
     }
 
     @Override
@@ -66,6 +65,6 @@ public class EntityTab implements Tab {
 
     @Override
     public boolean equals(Object other) {
-        return other != null && getClass() == other.getClass() && Objects.equals(entity.getUuid(), ((EntityTab) other).entity.getUuid());
+        return other != null && getClass() == other.getClass() && Objects.equals(entity.getUUID(), ((EntityTab) other).entity.getUUID());
     }
 }

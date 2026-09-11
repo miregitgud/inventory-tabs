@@ -1,35 +1,34 @@
 package folk.sisby.inventory_tabs;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.HorseScreen;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Predicate;
+import folk.sisby.inventory_tabs.util.Tuple;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.HorseInventoryScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 
 public class ScreenSupport {
-    public static Map<Identifier, Predicate<HandledScreen<?>>> DENY = new HashMap<>();
-    public static Map<Identifier, Predicate<HandledScreen<?>>> ALLOW = new HashMap<>();
-    public static Map<Identifier, Pair<Integer, Integer>> SCREEN_BOUND_OFFSETS = new HashMap<>();
+    public static Map<Identifier, Predicate<AbstractContainerScreen<?>>> DENY = new HashMap<>();
+    public static Map<Identifier, Predicate<AbstractContainerScreen<?>>> ALLOW = new HashMap<>();
+    public static Map<Identifier, Tuple<Integer, Integer>> SCREEN_BOUND_OFFSETS = new HashMap<>();
     public static Map<Identifier, Boolean> SCREEN_INVERTS = new HashMap<>();
 
-    public static Boolean allowTabs(RegistryKey<ScreenHandlerType<?>> type) {
-        if (InventoryTabs.CONFIG.screenOverrides.entrySet().stream().filter(e -> !e.getValue()).anyMatch(e -> Objects.equals(e.getKey(), type.getValue().toString()))) return false;
-        if (InventoryTabs.CONFIG.screenOverrides.entrySet().stream().filter(Map.Entry::getValue).anyMatch(e -> Objects.equals(e.getKey(), type.getValue().toString()))) return true;
+    public static Boolean allowTabs(ResourceKey<MenuType<?>> type) {
+        if (InventoryTabs.CONFIG.screenOverrides.entrySet().stream().filter(e -> !e.getValue()).anyMatch(e -> Objects.equals(e.getKey(), type.identifier().toString()))) return false;
+        if (InventoryTabs.CONFIG.screenOverrides.entrySet().stream().filter(Map.Entry::getValue).anyMatch(e -> Objects.equals(e.getKey(), type.identifier().toString()))) return true;
         return null;
     }
 
-	public static ScreenHandlerType<?> getScreenHandlerType(ScreenHandler handler) {
+	public static MenuType<?> getScreenHandlerType(AbstractContainerMenu handler) {
 		try {
 			return handler.getType();
 		} catch (UnsupportedOperationException | NoSuchElementException ignored) {
@@ -38,12 +37,12 @@ public class ScreenSupport {
 	}
 
     public static boolean allowTabs(Screen screen) {
-        if (screen instanceof HandledScreen<?> hs && hs.getScreenHandler() != null) {
+        if (screen instanceof AbstractContainerScreen<?> hs && hs.getMenu() != null) {
             if (DENY.values().stream().anyMatch(p -> p.test(hs))) return false;
             if (ALLOW.values().stream().anyMatch(p -> p.test(hs))) return true;
-	        ScreenHandlerType<?> type = getScreenHandlerType(hs.getScreenHandler());
+	        MenuType<?> type = getScreenHandlerType(hs.getMenu());
 	        if (type != null) {
-		        RegistryKey<ScreenHandlerType<?>> key = Registries.SCREEN_HANDLER.getKey(type).orElse(null);
+		        ResourceKey<MenuType<?>> key = BuiltInRegistries.MENU.getResourceKey(type).orElse(null);
 				if (key != null) {
 					Boolean override = allowTabs(key);
 					if (override != null) return override;
@@ -55,10 +54,10 @@ public class ScreenSupport {
     }
 
     static {
-        DENY.put(InventoryTabs.id("creative_screen"), hs -> hs instanceof CreativeInventoryScreen);
-        ALLOW.put(InventoryTabs.id("horse_screen"), hs -> hs instanceof HorseScreen);
-        InventoryTabs.CONFIG.leftBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.put(screenHandlerId.equals("null") ? null : Identifier.of(screenHandlerId), new Pair<>(offset, 0)));
-        InventoryTabs.CONFIG.rightBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.merge(screenHandlerId.equals("null") ? null : Identifier.of(screenHandlerId), new Pair<>(0, offset), (o, n) -> new Pair<>(o.getLeft(), n.getRight())));
-        InventoryTabs.CONFIG.invertedTabsOverride.forEach((screenHandlerId, doInvert) -> SCREEN_INVERTS.put(screenHandlerId.equals("null") ? null : Identifier.of(screenHandlerId), doInvert));
+        DENY.put(InventoryTabs.id("creative_screen"), hs -> hs instanceof CreativeModeInventoryScreen);
+        ALLOW.put(InventoryTabs.id("horse_screen"), hs -> hs instanceof HorseInventoryScreen);
+        InventoryTabs.CONFIG.leftBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.put(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), new Tuple<>(offset, 0)));
+        InventoryTabs.CONFIG.rightBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.merge(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), new Tuple<>(0, offset), (o, n) -> new Tuple<>(o.getA(), n.getB())));
+        InventoryTabs.CONFIG.invertedTabsOverride.forEach((screenHandlerId, doInvert) -> SCREEN_INVERTS.put(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), doInvert));
     }
 }
