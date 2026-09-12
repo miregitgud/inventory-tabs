@@ -73,11 +73,16 @@ public class TabManager {
 
     public static void finishOpeningScreen(AbstractContainerMenu handler) {
         if (nextTab != null) {
-            if (currentTab != null && currentTab != nextTab) currentTab.close(Minecraft.getInstance().player, Minecraft.getInstance().level, handler, Minecraft.getInstance().gameMode);
-            HandlerSlotUtil.tryPop(Minecraft.getInstance().player, Minecraft.getInstance().gameMode, handler);
-            currentTab = nextTab;
-            setCurrentPage(tabPositions.isEmpty() ? 0 : tabs.indexOf(nextTab) / tabPositions.size());
-            nextTab = null;
+            try {
+                if (currentTab != null && currentTab != nextTab) currentTab.close(Minecraft.getInstance().player, Minecraft.getInstance().level, handler, Minecraft.getInstance().gameMode);
+                HandlerSlotUtil.tryPop(Minecraft.getInstance().player, Minecraft.getInstance().gameMode, handler);
+                currentTab = nextTab;
+                setCurrentPage(tabPositions.isEmpty() ? 0 : tabs.indexOf(nextTab) / tabPositions.size());
+            } catch (Throwable t) {
+                InventoryTabs.LOGGER.error("Failed while transitioning screen for tab: {}", nextTab, t);
+            } finally {
+                nextTab = null;
+            }
         }
     }
 
@@ -109,11 +114,16 @@ public class TabManager {
 
     public static void openTabImmediate(Tab tab, LocalPlayer player, MultiPlayerGameMode interactionManager, ClientLevel world) {
         nextTab = tab;
-        HandlerSlotUtil.push(player, Minecraft.getInstance().gameMode, currentScreen.getMenu(), tab.isInstant());
-        player.connection.send(new ServerboundContainerClosePacket(currentScreen.getMenu().containerId));
-        tab.open(player, world, currentScreen.getMenu(), interactionManager);
-        if (tab.isInstant()) { // Instant screens don't have slot updates to wait for, so finish now.
-            finishOpeningScreen(currentScreen.getMenu());
+        try {
+            HandlerSlotUtil.push(player, Minecraft.getInstance().gameMode, currentScreen.getMenu(), tab.isInstant());
+            player.connection.send(new ServerboundContainerClosePacket(currentScreen.getMenu().containerId));
+            tab.open(player, world, currentScreen.getMenu(), interactionManager);
+            if (tab.isInstant()) { // Instant screens don't have slot updates to wait for, so finish now.
+                finishOpeningScreen(currentScreen.getMenu());
+            }
+        } catch (Throwable t) {
+            InventoryTabs.LOGGER.error("Failed to open tab: {}", tab, t);
+            nextTab = null;
         }
     }
 
@@ -233,6 +243,41 @@ public class TabManager {
         return false;
     }
 
+    public static boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (isLocked() || isHidden() || tabPositions.isEmpty()) return false;
+
+        boolean overLeftBtn = getPageButton(true).contains((int) mouseX, (int) mouseY);
+        boolean overRightBtn = getPageButton(false).contains((int) mouseX, (int) mouseY);
+        boolean overTabs = tabPositions.stream().anyMatch(pos -> getTabArea(pos).contains((int) mouseX, (int) mouseY));
+
+        if (overLeftBtn || overRightBtn) {
+            if (verticalAmount > 0 && currentPage > 0) {
+                setCurrentPage(currentPage - 1);
+                playClick();
+                return true;
+            } else if (verticalAmount < 0 && currentPage < getMaximumPage()) {
+                setCurrentPage(currentPage + 1);
+                playClick();
+                return true;
+            }
+        } else if (overTabs) {
+            if (tabs.size() > 1) {
+                int currentIdx = tabs.indexOf(currentTab);
+                if (currentIdx == -1) currentIdx = 0;
+                if (verticalAmount < 0) {
+                    int nextIdx = (currentIdx + 1) % tabs.size();
+                    openTab(tabs.get(nextIdx));
+                    return true;
+                } else if (verticalAmount > 0) {
+                    int prevIdx = (currentIdx - 1 + tabs.size()) % tabs.size();
+                    openTab(tabs.get(prevIdx));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean mouseReleased(double mouseX, double mouseY, int button) {
         return isLocked();
     }
@@ -247,6 +292,14 @@ public class TabManager {
             if (!enabled) Minecraft.getInstance().gui.toastManager().addToast(new ControlHintToast(Component.translatable("toast.inventory_tabs.disabled.title").withStyle(ChatFormatting.BOLD), InventoryTabs.TOGGLE_TABS));
         }
         if (isHidden() || isLocked()) return false;
+        if (event.hasAltDown() && event.key() >= 49 && event.key() <= 57) { // Keys 1-9
+            int index = event.key() - 49;
+            if (index < tabs.size()) {
+                openTab(tabs.get(index));
+                playClick();
+                return true;
+            }
+        }
         if (holdTabCooldown <= 0 && InventoryTabs.NEXT_TAB.matches(event)) {
             holdTabCooldown = InventoryTabs.CONFIG.holdTabCooldown;
             if (event.hasShiftDown()) {

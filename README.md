@@ -3,7 +3,8 @@
 
 <center>
 Tabs to swap between nearby screens like chests, crafting stations, and even entities.<br/>
-A fourth-generation rewrite of <a href="https://www.curseforge.com/minecraft/mc-mods/inventory-tabs">Inventory Tabs</a> by <a href="https://github.com/cakewhip">CakeWhip</a>, as continued by <a href="https://modrinth.com/user/Andrew6rant">Andrew6rant</a>.<br/>
+Ported and maintained for 26.2 by <b>Mirezka</b>.<br/>
+Originally created by <a href="https://github.com/cakewhip">CakeWhip</a>, continued by <a href="https://modrinth.com/user/Andrew6rant">Andrew6rant</a> and <a href="https://github.com/sisby-folk">Sisby folk</a>.<br/>
 Requires <a href="https://modrinth.com/mod/connector">Connector</a> and <a href="https://modrinth.com/mod/forgified-fabric-api">FFAPI</a> on forge. For creative mode, try <a href="https://modrinth.com/mod/sidekick">Sidekick</a>!<br/>
 </center>
 
@@ -11,12 +12,14 @@ Requires <a href="https://modrinth.com/mod/connector">Connector</a> and <a href=
 
 **Inventory Tabs** is a client-side mod that displays tabs on screens, each representing nearby blocks and entities.
 
-Tap `tab` to cycle forward screens, `shift+tab` to cycle back, or just click around!
+Tap `tab` to cycle forward screens, `shift+tab` to cycle back, use the mouse wheel over the tab bar, jump directly using `Alt+1` through `Alt+9`, or just click around!
 
 ### Features
 
 - Swap between crafting stations, storage, and your inventory without leaving their screens.
-- Works out of the box with many modded blocks - with configuration in case anything goes wrong.
+- **Mouse Wheel Tab Switching**: Hover over the tabs to scroll smoothly between open containers and stations.
+- **Direct Hotkeys**: Jump straight to any tab with `Alt + 1` through `Alt + 9`.
+- **Mod Compatibility**: Out-of-the-box support for conventional tags (`#c:chests`, `#c:crafting_tables`, `#c:barrels`, `#c:shulker_boxes`) and exclusions for non-container interactive blocks (Farmer's Delight, Create, Waystones, Comforts, Supplementaries).
 - Storage tabs can be labelled using signs, item frames, or (w/ server) anvil-renaming for organisation.
 - Stacks held on your cursor carry over to the next screen as long as your inventory isn't full.
 
@@ -93,18 +96,24 @@ These tabs are held by the [Tab Manager](https://github.com/sisby-folk/inventory
 Tabs are added via registered [Tab Providers](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/TabProviders.java). Basic providers like [Vehicle Inventory](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/VehicleInventoryTabProvider.java) check simple conditions and add a special tab. The more advanced [Registry Providers](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/RegistryTabProvider.java) are designed to be assigned a specific set of [blocks](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/BlockTabProvider.java), [entity types](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/EntityTabProvider.java), or [items](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/ItemTabProvider.java) that they're responsible for providing tabs for - which is frozen at reload time - and then searching for those around the player every tick. Using these generics, simpler concrete providers are made ([Ender Chests](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/EnderChestTabProvider.java), [Unique Block](https://github.com/sisby-folk/inventory-tabs/blob/1.20/src/main/java/folk/sisby/inventory_tabs/providers/UniqueBlockTabProvider.java).)
 
 
-### Addons
+### Building from Source & Addons
+
+#### Building Prerequisites
+* **Java 25 JDK** (Azul Zulu, Eclipse Temurin, or Oracle JDK 25)
+* Run `./gradlew.bat build` (Windows) or `./gradlew build` (Linux/macOS)
+
+#### Addons
 
 ```groovy
 repositories {
 	maven { url "https://repo.sleeping.town/" }
 }
 dependencies {
-   modImplementation "folk.sisby:inventory-tabs:1.2.0"
+   modImplementation "folk.sisby:inventory-tabs:1.4.4+26.2"
 }
 ```
 
-Addons for Inventory Tabs 4 can add new tab types and tab providers, and add advanced matching logic to current providers, provide custom tab layouts for their screens (including inverted tabs), and signal when specific tabs should be marked as open.
+Addons for Inventory Tabs can add new tab types and tab providers, and add advanced matching logic to current providers, provide custom tab layouts for their screens (including inverted tabs), and signal when specific tabs should be marked as open.
 
 For a practical example, check out [Portable Crafting](https://github.com/sisby-folk/portable-crafting)!
 
@@ -112,8 +121,8 @@ For a practical example, check out [Portable Crafting](https://github.com/sisby-
 
 ### Afterword
 
-All mods are built on the work of many others - We're the fourth set of maintainers of this mod!<br/>
-This version is a partial rewrite, following the work of CakeWhip, LiamMCW, and Andrew6rant.
+All mods are built on the work of many others!<br/>
+This version is ported and maintained by **Mirezka**, following the previous work of CakeWhip, LiamMCW, Andrew6rant, and Sisby folk.
 
 This mod is included in [Tinkerer's Quilt](https://modrinth.com/modpack/tinkerers-quilt) - our modpack about rediscovering vanilla.
 

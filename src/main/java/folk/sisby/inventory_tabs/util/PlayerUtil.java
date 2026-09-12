@@ -20,6 +20,18 @@ public class PlayerUtil {
     public static final int REACH = 5;
     public static final double BLOCK_REACH_SQUARE = REACH * REACH;
 
+    private static final Vec3[] SAMPLE_OFFSETS = new Vec3[]{
+            new Vec3(0.5D, 0.5D, 0.5D),
+            new Vec3(0.5D, 0.9D, 0.5D),
+            new Vec3(0.5D, 0.1D, 0.5D),
+            new Vec3(0.1D, 0.5D, 0.5D),
+            new Vec3(0.9D, 0.5D, 0.5D),
+            new Vec3(0.5D, 0.5D, 0.1D),
+            new Vec3(0.5D, 0.5D, 0.9D),
+            new Vec3(0.2D, 0.8D, 0.2D),
+            new Vec3(0.8D, 0.8D, 0.8D)
+    };
+
     public static boolean inRange(Player player, BlockPos pos) {
         if (Vec3.atCenterOf(pos).distanceToSqr(player.getEyePosition()) > BLOCK_REACH_SQUARE) return false;
         BlockHitResult result = raycast(player, pos);
@@ -34,13 +46,15 @@ public class PlayerUtil {
     }
 
     public static BlockHitResult raycast(Player player, BlockPos pos) {
-        List<Vec3> blockOffsets = new ArrayList<>();
         RaycastCache raycastCache = TabManager.blockRaycastCache.get(pos);
         if (raycastCache != null && raycastCache.lastValidOffset != null) {
-            blockOffsets.add(raycastCache.lastValidOffset);
+            BlockHitResult cachedHit = player.level().clip(new ClipContext(player.getEyePosition(), Vec3.atLowerCornerOf(pos).add(raycastCache.lastValidOffset), ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+            if (cachedHit.getType() != HitResult.Type.MISS && cachedHit.getBlockPos().equals(pos)) {
+                raycastCache.hit(raycastCache.lastValidOffset);
+                return cachedHit;
+            }
         }
-        blockOffsets.addAll(generateRandomVec3dList(9, new Vec3(0.0D, 0.0D, 0.0D), new Vec3(1.0D, 1.0D, 1.0D)));
-        for (Vec3 offset : blockOffsets) {
+        for (Vec3 offset : SAMPLE_OFFSETS) {
             BlockHitResult hitResult = player.level().clip(new ClipContext(player.getEyePosition(), Vec3.atLowerCornerOf(pos).add(offset), ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
             if (hitResult.getType() != HitResult.Type.MISS && hitResult.getBlockPos().equals(pos)) {
                 TabManager.blockRaycastCache.computeIfAbsent(pos, p -> new RaycastCache()).hit(offset);
@@ -52,21 +66,5 @@ public class PlayerUtil {
 
     public static EntityHitResult raycast(Player player, Entity entity) {
         return ProjectileUtil.getEntityHitResult(player, player.getEyePosition(), entity.position(), player.getBoundingBox().expandTowards(entity.getViewVector(1.0F).scale(REACH)).inflate(1.0, 1.0, 1.0), e -> true, BLOCK_REACH_SQUARE);
-    }
-
-    public static List<Vec3> generateRandomVec3dList(int count, Vec3 min, Vec3 max) {
-        List<Vec3> list = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            list.add(generateRandomVec3d(min, max));
-        }
-        return list;
-    }
-
-    private static Vec3 generateRandomVec3d(Vec3 min, Vec3 max) {
-        Random random = new Random();
-        double x = min.x + (max.x - min.x) * random.nextDouble();
-        double y = min.y + (max.y - min.y) * random.nextDouble();
-        double z = min.z + (max.z - min.z) * random.nextDouble();
-        return new Vec3(x, y, z);
     }
 }
