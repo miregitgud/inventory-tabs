@@ -11,6 +11,7 @@ import folk.sisby.inventory_tabs.providers.BlockTabProvider;
 import folk.sisby.inventory_tabs.providers.ChestBlockTabProvider;
 import folk.sisby.inventory_tabs.providers.EnderChestTabProvider;
 import folk.sisby.inventory_tabs.providers.EntityTabProvider;
+import folk.sisby.inventory_tabs.providers.EquippedBackpackTabProvider;
 import folk.sisby.inventory_tabs.providers.ItemTabProvider;
 import folk.sisby.inventory_tabs.providers.PlayerInventoryTabProvider;
 import folk.sisby.inventory_tabs.providers.RegistryTabProvider;
@@ -68,6 +69,7 @@ public class TabProviders {
     // Single-Purpose
     public static final PlayerInventoryTabProvider PLAYER_INVENTORY = register(InventoryTabs.id("player_inventory"), new PlayerInventoryTabProvider());
     public static final VehicleInventoryTabProvider VEHICLE_INVENTORY = register(InventoryTabs.id("vehicle_inventory"), new VehicleInventoryTabProvider());
+    public static final EquippedBackpackTabProvider EQUIPPED_BACKPACK = register(InventoryTabs.id("equipped_backpack"), new EquippedBackpackTabProvider());
 
     public static Set<EntityType<?>> warmEntities = new HashSet<>();
 

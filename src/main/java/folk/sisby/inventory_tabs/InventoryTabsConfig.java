@@ -121,6 +121,9 @@ public class InventoryTabsConfig extends WrappedConfig {
             .put("supplementaries:notice_board", "")
             .put("supplementaries:globe", "")
             .put("supplementaries:sign_post", "")
+            .put("travelersbackpack:*", "inventory_tabs:block_simple_storage")
+            .put("#travelersbackpack:backpacks", "inventory_tabs:block_simple_storage")
+            .put("#c:backpacks", "inventory_tabs:block_simple_storage")
             .put("#c:crafting_tables", "inventory_tabs:block_unique")
             .put("#c:chests", "inventory_tabs:block_chest")
             .put("#c:wooden_chests", "inventory_tabs:block_chest")
@@ -152,6 +155,9 @@ public class InventoryTabsConfig extends WrappedConfig {
     @Comment("")
     public Map<String, String> itemProviderOverrides = ValueMap.builder("")
             .put("minecraft:dirt", "")
+            .put("travelersbackpack:*", "inventory_tabs:item_unique")
+            .put("#travelersbackpack:backpacks", "inventory_tabs:item_unique")
+            .put("#c:backpacks", "inventory_tabs:item_unique")
             .build();
 
     @Comment("")

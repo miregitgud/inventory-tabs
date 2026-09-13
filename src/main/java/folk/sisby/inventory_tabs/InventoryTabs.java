@@ -40,5 +40,18 @@ public class InventoryTabs implements ClientModInitializer {
                 GLFW.GLFW_KEY_LEFT_BRACKET,
                 KeyMapping.Category.INVENTORY
         ));
+        TabManager.tabGuessers.put(id("backpack"), (screen, tabs) -> {
+            String screenName = screen.getClass().getName();
+            String menuName = screen.getMenu() != null ? screen.getMenu().getClass().getName() : "";
+            if (screenName.contains("Backpack") || menuName.contains("Backpack") ||
+                    screenName.contains("travelersbackpack") || menuName.contains("travelersbackpack")) {
+                for (folk.sisby.inventory_tabs.tabs.Tab tab : tabs) {
+                    if (tab instanceof folk.sisby.inventory_tabs.tabs.EquippedBackpackTab) {
+                        return tab;
+                    }
+                }
+            }
+            return null;
+        });
     }
 }

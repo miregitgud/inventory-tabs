@@ -19,7 +19,7 @@ Tap `tab` to cycle forward screens, `shift+tab` to cycle back, use the mouse whe
 - Swap between crafting stations, storage, and your inventory without leaving their screens.
 - **Mouse Wheel Tab Switching**: Hover over the tabs to scroll smoothly between open containers and stations.
 - **Direct Hotkeys**: Jump straight to any tab with `Alt + 1` through `Alt + 9`.
-- **Mod Compatibility**: Out-of-the-box support for conventional tags (`#c:chests`, `#c:crafting_tables`, `#c:barrels`, `#c:shulker_boxes`) and exclusions for non-container interactive blocks (Farmer's Delight, Create, Waystones, Comforts, Supplementaries).
+- **Mod Compatibility**: Out-of-the-box support for conventional tags (`#c:chests`, `#c:crafting_tables`, `#c:barrels`, `#c:shulker_boxes`), Traveler's Backpack (placed, held, and equipped in chest/back/trinket slots), and exclusions for non-container interactive blocks (Farmer's Delight, Create, Waystones, Comforts, Supplementaries).
 - Storage tabs can be labelled using signs, item frames, or (w/ server) anvil-renaming for organisation.
 - Stacks held on your cursor carry over to the next screen as long as your inventory isn't full.
 
