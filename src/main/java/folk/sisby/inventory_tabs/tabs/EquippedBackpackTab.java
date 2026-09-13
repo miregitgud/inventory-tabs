@@ -11,13 +11,11 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import java.util.Objects;
-
 public class EquippedBackpackTab implements Tab {
-    public final ItemStack stack;
+    public ItemStack stack;
 
     public EquippedBackpackTab(ItemStack stack) {
-        this.stack = stack.copy();
+        this.stack = stack != null ? stack.copy() : ItemStack.EMPTY;
     }
 
     @Override
@@ -31,14 +29,16 @@ public class EquippedBackpackTab implements Tab {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return true;
         ItemStack equipped = BackpackUtil.getEquippedBackpack(player);
-        return equipped == null || equipped.isEmpty() || !ItemStack.isSameItemSameComponents(stack, equipped);
+        return equipped == null || equipped.isEmpty() || !BackpackUtil.isBackpack(equipped);
     }
 
     @Override
     public Component getHoverText() {
-        if (!stack.isEmpty()) {
-            Component hoverName = stack.getHoverName();
-            if (!hoverName.equals(stack.getItem().getName(stack))) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        ItemStack current = player != null ? BackpackUtil.getEquippedBackpack(player) : stack;
+        if (current != null && !current.isEmpty()) {
+            Component hoverName = current.getHoverName();
+            if (!hoverName.equals(current.getItem().getName(current))) {
                 return hoverName.copy().withStyle(ChatFormatting.ITALIC);
             }
             return hoverName;
@@ -63,19 +63,24 @@ public class EquippedBackpackTab implements Tab {
 
     @Override
     public ItemStack getTabIcon() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null) {
+            ItemStack equipped = BackpackUtil.getEquippedBackpack(player);
+            if (equipped != null && !equipped.isEmpty()) {
+                return equipped;
+            }
+        }
         return stack;
     }
 
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        EquippedBackpackTab that = (EquippedBackpackTab) other;
-        return ItemStack.isSameItemSameComponents(stack, that.stack);
+        return other instanceof EquippedBackpackTab;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(stack.getItem());
+        return EquippedBackpackTab.class.hashCode();
     }
 }
