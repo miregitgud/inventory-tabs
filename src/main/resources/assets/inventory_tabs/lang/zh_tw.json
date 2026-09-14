@@ -1,7 +1,9 @@
 {
   "key.inventory_tabs.key.next_tab": "下一頁",
+  "key.inventory_tabs.key.prev_tab": "上一頁",
   "key.inventory_tabs.key.toggle_tabs": "切換頁簽可見度",
   "toast.inventory_tabs.disabled.title": "已停用《物品欄頁籤》",
   "toast.inventory_tabs.disabled.key_hint": "[按 %s 來切換]",
-  "gui.inventory_tabs.tab.inventory": "物品欄"
+  "gui.inventory_tabs.tab.inventory": "物品欄",
+  "gui.inventory_tabs.page_indicator": "%1$s/%2$s"
 }

@@ -39,6 +39,7 @@ public class BlockTab implements Tab {
     public List<BlockPos> multiblockPositions;
     public ItemStack itemStack;
     public Component hoverText;
+    protected int previewRefreshCooldown = 20;
 
     public BlockTab(Level world, BlockPos pos, Map<Identifier, BiPredicate<Level, BlockPos>> preclusions, int priority, boolean unique) {
         this.priority = priority;
@@ -60,8 +61,11 @@ public class BlockTab implements Tab {
     @Override
     public boolean shouldBeRemoved(Level world, boolean current) {
         if (!world.getBlockState(pos).getBlock().equals(block)) return true;
-        refreshMultiblock(world);
-        refreshPreview(world);
+        if (--previewRefreshCooldown <= 0) {
+            previewRefreshCooldown = 20;
+            refreshMultiblock(world);
+            refreshPreview(world);
+        }
         if (current) return false;
         return preclusions.values().stream().anyMatch(p -> p.test(world, pos));
     }

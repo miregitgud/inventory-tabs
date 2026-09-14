@@ -17,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class BlockTabProvider extends RegistryTabProvider<Block> {
     public final Map<Identifier, BiPredicate<Level, BlockPos>> preclusions = new HashMap<>();
@@ -27,10 +28,13 @@ public abstract class BlockTabProvider extends RegistryTabProvider<Block> {
 
     @Override
     public void addAvailableTabs(LocalPlayer player, Consumer<Tab> addTab) {
+        if (values.isEmpty()) return;
         Level world = player.level();
         Set<Block> blocksAdded = new HashSet<>();
         for (BlockPos pos : BlockUtil.getBlocksInRadius(player.blockPosition(), PlayerUtil.REACH)) {
-            Block block = world.getBlockState(pos).getBlock();
+            BlockState state = world.getBlockState(pos);
+            if (state.isAir()) continue;
+            Block block = state.getBlock();
             if (values.contains(block) && preclusions.values().stream().noneMatch(p -> p.test(world, pos))) {
                 if (isUnique() && !blocksAdded.add(block)) continue;
                 addTab.accept(createTab(world, pos));

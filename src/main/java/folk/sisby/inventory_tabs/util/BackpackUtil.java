@@ -21,8 +21,36 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BackpackUtil {
+    private static final Set<String> MISSING_CLASSES = ConcurrentHashMap.newKeySet();
+    private static final Map<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
+    private static final Field CLICK_COUNT_FIELD;
+
+    static {
+        Field f = null;
+        try {
+            f = KeyMapping.class.getDeclaredField("clickCount");
+            f.setAccessible(true);
+        } catch (Throwable ignored) {}
+        CLICK_COUNT_FIELD = f;
+    }
+
+    private static Class<?> findClass(String name) {
+        if (MISSING_CLASSES.contains(name)) return null;
+        Class<?> cached = CLASS_CACHE.get(name);
+        if (cached != null) return cached;
+        try {
+            Class<?> clazz = Class.forName(name);
+            CLASS_CACHE.put(name, clazz);
+            return clazz;
+        } catch (Throwable t) {
+            MISSING_CLASSES.add(name);
+            return null;
+        }
+    }
     public static boolean isBackpack(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -143,7 +171,8 @@ public class BackpackUtil {
         };
         for (String className : candidateClasses) {
             try {
-                Class<?> clazz = Class.forName(className);
+                Class<?> clazz = findClass(className);
+                if (clazz == null) continue;
                 for (Method m : clazz.getMethods()) {
                     if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1) {
                         Class<?> paramType = m.getParameterTypes()[0];
@@ -192,7 +221,8 @@ public class BackpackUtil {
 
     private static ItemStack getFromTrinkets(Player player) {
         try {
-            Class<?> trinketsApi = Class.forName("dev.emi.trinkets.api.TrinketsApi");
+            Class<?> trinketsApi = findClass("dev.emi.trinkets.api.TrinketsApi");
+            if (trinketsApi == null) return ItemStack.EMPTY;
             Method getTrinketComp = trinketsApi.getMethod("getTrinketComponent", LivingEntity.class);
             Optional<?> opt = (Optional<?>) getTrinketComp.invoke(null, player);
             if (opt != null && opt.isPresent()) {
@@ -212,7 +242,8 @@ public class BackpackUtil {
 
     private static ItemStack getFromAccessories(Player player) {
         try {
-            Class<?> accCap = Class.forName("io.wispforest.accessories.api.AccessoriesCapability");
+            Class<?> accCap = findClass("io.wispforest.accessories.api.AccessoriesCapability");
+            if (accCap == null) return ItemStack.EMPTY;
             Method getCap = accCap.getMethod("get", LivingEntity.class);
             Object cap = getCap.invoke(null, player);
             if (cap != null) {
@@ -236,7 +267,8 @@ public class BackpackUtil {
 
     private static ItemStack getFromCurios(Player player) {
         try {
-            Class<?> curiosApi = Class.forName("top.theillusivec4.curios.api.CuriosApi");
+            Class<?> curiosApi = findClass("top.theillusivec4.curios.api.CuriosApi");
+            if (curiosApi == null) return ItemStack.EMPTY;
             Method getHelper = curiosApi.getMethod("getCuriosHelper");
             Object helper = getHelper.invoke(null);
             if (helper != null) {
@@ -268,7 +300,8 @@ public class BackpackUtil {
         };
         for (String className : candidatePacketClasses) {
             try {
-                Class<?> packetClass = Class.forName(className);
+                Class<?> packetClass = findClass(className);
+                if (packetClass == null) continue;
                 Object packetInstance = null;
                 for (Constructor<?> ctor : packetClass.getConstructors()) {
                     if (ctor.getParameterCount() == 0) {
@@ -296,10 +329,12 @@ public class BackpackUtil {
                 }
                 if (packetInstance instanceof CustomPacketPayload payload) {
                     try {
-                        Class<?> cpnClass = Class.forName("net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking");
-                        Method sendMethod = cpnClass.getMethod("send", CustomPacketPayload.class);
-                        sendMethod.invoke(null, payload);
-                        return;
+                        Class<?> cpnClass = findClass("net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking");
+                        if (cpnClass != null) {
+                            Method sendMethod = cpnClass.getMethod("send", CustomPacketPayload.class);
+                            sendMethod.invoke(null, payload);
+                            return;
+                        }
                     } catch (Throwable ignored) {}
                 }
             } catch (Throwable ignored) {}
@@ -313,7 +348,8 @@ public class BackpackUtil {
         };
         for (String netClass : networkClasses) {
             try {
-                Class<?> clazz = Class.forName(netClass);
+                Class<?> clazz = findClass(netClass);
+                if (clazz == null) continue;
                 for (Method m : clazz.getMethods()) {
                     if (Modifier.isStatic(m.getModifiers()) && m.getName().toLowerCase().contains("open")) {
                         if (m.getParameterCount() == 0) {
@@ -346,9 +382,9 @@ public class BackpackUtil {
     private static void triggerKeyMapping(KeyMapping keyMapping) {
         keyMapping.setDown(true);
         try {
-            Field clickCount = KeyMapping.class.getDeclaredField("clickCount");
-            clickCount.setAccessible(true);
-            clickCount.setInt(keyMapping, clickCount.getInt(keyMapping) + 1);
+            if (CLICK_COUNT_FIELD != null) {
+                CLICK_COUNT_FIELD.setInt(keyMapping, CLICK_COUNT_FIELD.getInt(keyMapping) + 1);
+            }
         } catch (Throwable ignored) {}
         keyMapping.setDown(false);
     }

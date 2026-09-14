@@ -6,6 +6,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"HandledScreenAccessor",
+		"MixinClientPacketListener",
 		"MixinGenericContainerScreen",
 		"MixinGenericContainerScreenHandler",
 		"MixinHandledScreen",

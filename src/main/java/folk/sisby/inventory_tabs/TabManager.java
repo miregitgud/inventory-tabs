@@ -99,7 +99,7 @@ public class TabManager {
         blockRaycastCache.values().removeIf(timer -> !timer.validThisTick && timer.ticksInvalid >= InventoryTabs.CONFIG.blockRaycastTimeout);
         blockRaycastCache.values().forEach(RaycastCache::tick);
         if (holdTabCooldown > 0) {
-            if (InventoryTabs.NEXT_TAB.isDown()) {
+            if (InventoryTabs.NEXT_TAB.isDown() || (InventoryTabs.PREV_TAB != null && InventoryTabs.PREV_TAB.isDown())) {
                 holdTabCooldown--;
             } else {
                 holdTabCooldown = 0;
@@ -115,11 +115,13 @@ public class TabManager {
     public static void openTabImmediate(Tab tab, LocalPlayer player, MultiPlayerGameMode interactionManager, ClientLevel world) {
         nextTab = tab;
         try {
-            HandlerSlotUtil.push(player, Minecraft.getInstance().gameMode, currentScreen.getMenu(), tab.isInstant());
-            player.connection.send(new ServerboundContainerClosePacket(currentScreen.getMenu().containerId));
-            tab.open(player, world, currentScreen.getMenu(), interactionManager);
+            if (currentScreen != null && currentScreen.getMenu() != null) {
+                HandlerSlotUtil.push(player, interactionManager, currentScreen.getMenu(), tab.isInstant());
+                player.connection.send(new ServerboundContainerClosePacket(currentScreen.getMenu().containerId));
+            }
+            tab.open(player, world, currentScreen != null ? currentScreen.getMenu() : null, interactionManager);
             if (tab.isInstant()) { // Instant screens don't have slot updates to wait for, so finish now.
-                finishOpeningScreen(currentScreen.getMenu());
+                finishOpeningScreen(currentScreen != null ? currentScreen.getMenu() : null);
             }
         } catch (Throwable t) {
             InventoryTabs.LOGGER.error("Failed to open tab: {}", tab, t);
@@ -135,7 +137,13 @@ public class TabManager {
             ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
             if (player != null && interactionManager != null && networkHandler != null && player.level() instanceof ClientLevel world) {
                 if (!tab.shouldBeRemoved(world, false)) {
-                    if (tab.isBuffered()) openTabImmediate(new PlayerInventoryTab(), player, interactionManager, world);
+                    if (tab.isBuffered() && currentScreen != null && !(currentScreen instanceof InventoryScreen)) {
+                        if (currentScreen.getMenu() != null) {
+                            HandlerSlotUtil.push(player, interactionManager, currentScreen.getMenu(), false);
+                            player.connection.send(new ServerboundContainerClosePacket(currentScreen.getMenu().containerId));
+                        }
+                        player.containerMenu = player.inventoryMenu;
+                    }
                     openTabImmediate(tab, player, interactionManager, world);
                 }
             }
@@ -209,7 +217,7 @@ public class TabManager {
 
     public static boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isLocked()) return true;
-        if (isHidden()) return false;
+        if (isHidden() || tabPositions.isEmpty()) return false;
         if (button == 0) {
             if (getPageButton(true).contains((int) mouseX, (int) mouseY)) {
                 if (currentPage > 0) {
@@ -300,22 +308,27 @@ public class TabManager {
                 return true;
             }
         }
-        if (holdTabCooldown <= 0 && InventoryTabs.NEXT_TAB.matches(event)) {
-            holdTabCooldown = InventoryTabs.CONFIG.holdTabCooldown;
-            if (event.hasShiftDown()) {
-                if (tabs.indexOf(currentTab) == 0) {
-                    openTab(tabs.get(tabs.size() - 1));
+        if (holdTabCooldown <= 0) {
+            boolean isNext = InventoryTabs.NEXT_TAB.matches(event);
+            boolean isPrev = InventoryTabs.PREV_TAB != null && InventoryTabs.PREV_TAB.matches(event);
+            if (isNext || isPrev) {
+                holdTabCooldown = InventoryTabs.CONFIG.holdTabCooldown;
+                boolean goBack = isPrev || event.hasShiftDown();
+                if (goBack) {
+                    if (tabs.indexOf(currentTab) <= 0) {
+                        openTab(tabs.get(tabs.size() - 1));
+                    } else {
+                        openTab(tabs.get(tabs.indexOf(currentTab) - 1));
+                    }
                 } else {
-                    openTab(tabs.get(tabs.indexOf(currentTab) - 1));
+                    if (tabs.indexOf(currentTab) >= tabs.size() - 1) {
+                        openTab(tabs.get(0));
+                    } else {
+                        openTab(tabs.get(tabs.indexOf(currentTab) + 1));
+                    }
                 }
-            } else {
-                if (tabs.indexOf(currentTab) == tabs.size() - 1) {
-                    openTab(tabs.get(0));
-                } else {
-                    openTab(tabs.get(tabs.indexOf(currentTab) + 1));
-                }
+                return true;
             }
-            return true;
         }
 
         return false;
@@ -326,11 +339,11 @@ public class TabManager {
     }
 
     public static int getMaximumPage() {
-        return tabs.size() / (tabPositions.size() + 1);
+        return tabPositions.isEmpty() || tabs.isEmpty() ? 0 : (tabs.size() - 1) / tabPositions.size();
     }
 
     public static void render(GuiGraphicsExtractor drawContext, double mouseX, double mouseY) {
-        if (isHidden()) return;
+        if (isHidden() || tabPositions.isEmpty()) return;
         for (int i = 0; i < Math.min(tabPositions.size(), tabs.size() - currentPage * tabPositions.size()); i++) {
             WidgetPosition pos = tabPositions.get(i);
             Tab tab = tabs.get(currentPage * tabPositions.size() + i);
@@ -343,6 +356,7 @@ public class TabManager {
     }
 
     public static Rect2i getPageButton(boolean left) {
+        if (tabPositions.isEmpty()) return new Rect2i(0, 0, 0, 0);
         WidgetPosition pos = tabPositions.get(left ? 0 : tabPositions.size() - 1);
         return new Rect2i(pos.x + (left ? -BUTTON_WIDTH : TAB_WIDTH), pos.y - (pos.up ? BUTTON_HEIGHT : 0), BUTTON_WIDTH, BUTTON_HEIGHT);
     }
@@ -358,7 +372,7 @@ public class TabManager {
         int u = BUTTON_WIDTH * (left ? 0 : 1);
         int v = BUTTON_HEIGHT * (active ? hovered ? 2 : 1 : 0);
         drawContext.blit(RenderPipelines.GUI_TEXTURED, BUTTONS_TEXTURE, rect.getX(), rect.getY(), u, v, rect.getWidth(), rect.getHeight(), 256, 256);
-        if (hovered) drawContext.setTooltipForNextFrame(Minecraft.getInstance().font, Component.literal((currentPage + 1) + "/" + (getMaximumPage() + 1)), (int) mouseX, (int) mouseY);
+        if (hovered) drawContext.setTooltipForNextFrame(Minecraft.getInstance().font, Component.translatable("gui.inventory_tabs.page_indicator", currentPage + 1, getMaximumPage() + 1), (int) mouseX, (int) mouseY);
     }
 
     public static void playClick() {

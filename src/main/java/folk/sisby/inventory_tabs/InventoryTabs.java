@@ -18,6 +18,7 @@ public class InventoryTabs implements ClientModInitializer {
     public static final InventoryTabsConfig CONFIG = InventoryTabsConfig.createToml(FabricLoader.getInstance().getConfigDir(), "", ID, InventoryTabsConfig.class);
 
     public static KeyMapping NEXT_TAB;
+    public static KeyMapping PREV_TAB;
     public static KeyMapping TOGGLE_TABS;
 
     public static Identifier id(String path) {
@@ -32,6 +33,12 @@ public class InventoryTabs implements ClientModInitializer {
                 "key.inventory_tabs.key.next_tab",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_TAB,
+                KeyMapping.Category.INVENTORY
+        ));
+        PREV_TAB = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+                "key.inventory_tabs.key.prev_tab",
+                InputConstants.Type.KEYSYM,
+                InputConstants.UNKNOWN.getValue(),
                 KeyMapping.Category.INVENTORY
         ));
         TOGGLE_TABS = KeyMappingHelper.registerKeyMapping(new KeyMapping(
