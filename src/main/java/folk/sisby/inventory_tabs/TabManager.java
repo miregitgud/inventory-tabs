@@ -91,6 +91,8 @@ public class TabManager {
             currentTab.close(Minecraft.getInstance().player, Minecraft.getInstance().level, Minecraft.getInstance().player != null ? Minecraft.getInstance().player.containerMenu : null, Minecraft.getInstance().gameMode);
             currentTab = null;
         }
+        currentScreen = null;
+        tabPositions.clear();
         nextTab = null;
         currentPage = 0;
     }
