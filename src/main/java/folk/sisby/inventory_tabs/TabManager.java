@@ -88,7 +88,10 @@ public class TabManager {
 
     public static void screenDiscarded() {
         if (currentTab != null) {
-            currentTab.close(Minecraft.getInstance().player, Minecraft.getInstance().level, Minecraft.getInstance().player != null ? Minecraft.getInstance().player.containerMenu : null, Minecraft.getInstance().gameMode);
+            Minecraft client = Minecraft.getInstance();
+            if (client != null && client.player != null) {
+                currentTab.close(client.player, client.level, client.player.containerMenu, client.gameMode);
+            }
             currentTab = null;
         }
         currentScreen = null;
