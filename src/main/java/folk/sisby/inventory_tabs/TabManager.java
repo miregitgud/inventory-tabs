@@ -69,8 +69,8 @@ public class TabManager {
         tabPositions = ((InventoryTabsScreen) currentScreen).getTabPositions(TAB_WIDTH);
         if (nextTab == null) {
             nextTab = guessOpenedTab(client, screen);
-            finishOpeningScreen(screen.getMenu());
         }
+        finishOpeningScreen(screen.getMenu());
     }
 
     public static void finishOpeningScreen(AbstractContainerMenu handler) {
@@ -80,7 +80,9 @@ public class TabManager {
                 if (currentTab != null && currentTab != nextTab) currentTab.close(Minecraft.getInstance().player, Minecraft.getInstance().level, handler, Minecraft.getInstance().gameMode);
                 HandlerSlotUtil.tryPop(Minecraft.getInstance().player, Minecraft.getInstance().gameMode, handler);
                 currentTab = nextTab;
-                setCurrentPage(tabPositions.isEmpty() ? 0 : tabs.indexOf(nextTab) / tabPositions.size());
+                if (!tabPositions.isEmpty() && tabs.contains(nextTab)) {
+                    setCurrentPage(tabs.indexOf(nextTab) / tabPositions.size());
+                }
             } catch (Throwable t) {
                 InventoryTabs.LOGGER.error("Failed while transitioning screen for tab: {}", nextTab, t);
             } finally {
@@ -165,10 +167,6 @@ public class TabManager {
             if (player != null && interactionManager != null && networkHandler != null && player.level() instanceof ClientLevel world) {
                 if (!tab.shouldBeRemoved(world, false)) {
                     if (tab.isBuffered() && currentScreen != null && !(currentScreen instanceof InventoryScreen)) {
-                        if (currentScreen.getMenu() != null) {
-                            HandlerSlotUtil.push(player, interactionManager, currentScreen.getMenu(), false);
-                            player.connection.send(new ServerboundContainerClosePacket(currentScreen.getMenu().containerId));
-                        }
                         player.containerMenu = player.inventoryMenu;
                     }
                     openTabImmediate(tab, player, interactionManager, world);

@@ -24,7 +24,7 @@ public class PlayerInventoryTab implements Tab {
 
     @Override
     public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
-        Minecraft.getInstance().setScreenAndShow(new InventoryScreen(player));
+        Minecraft.getInstance().gui.setScreen(new InventoryScreen(player));
     }
 
     @Override

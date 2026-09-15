@@ -29,9 +29,9 @@ public class MixinKeyBinding {
 
 	@Inject(method = "click", at = @At("HEAD"), cancellable = true)
 	private static void allowTabConflictedOnKeyPressed(InputConstants.Key key, CallbackInfo ci) {
-		if (InventoryTabs.NEXT_TAB == null) return;
-		InputConstants.Key nextTabKey = ((MixinKeyBinding) (Object) InventoryTabs.NEXT_TAB).key;
-		if (nextTabKey == null || !nextTabKey.equals(key)) return;
+		boolean isNext = InventoryTabs.NEXT_TAB != null && key.equals(((MixinKeyBinding) (Object) InventoryTabs.NEXT_TAB).key);
+		boolean isPrev = InventoryTabs.PREV_TAB != null && key.equals(((MixinKeyBinding) (Object) InventoryTabs.PREV_TAB).key);
+		if (!isNext && !isPrev) return;
 		for (KeyMapping bind : KEYS_TO_BINDINGS.get(key)) {
 			((MixinKeyBinding) (Object) bind).clickCount++;
 		}
@@ -40,9 +40,9 @@ public class MixinKeyBinding {
 
 	@Inject(method = "set", at = @At("HEAD"), cancellable = true)
 	private static void allowTabConflictedSetKeyPressed(InputConstants.Key key, boolean pressed$, CallbackInfo ci) {
-		if (InventoryTabs.NEXT_TAB == null) return;
-		InputConstants.Key nextTabKey = ((MixinKeyBinding) (Object) InventoryTabs.NEXT_TAB).key;
-		if (nextTabKey == null || !nextTabKey.equals(key)) return;
+		boolean isNext = InventoryTabs.NEXT_TAB != null && key.equals(((MixinKeyBinding) (Object) InventoryTabs.NEXT_TAB).key);
+		boolean isPrev = InventoryTabs.PREV_TAB != null && key.equals(((MixinKeyBinding) (Object) InventoryTabs.PREV_TAB).key);
+		if (!isNext && !isPrev) return;
 		for (KeyMapping bind : KEYS_TO_BINDINGS.get(key)) {
 			bind.setDown(pressed$);
 		}

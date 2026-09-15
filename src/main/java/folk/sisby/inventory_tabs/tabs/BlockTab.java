@@ -2,6 +2,7 @@ package folk.sisby.inventory_tabs.tabs;
 
 import folk.sisby.inventory_tabs.InventoryTabs;
 import folk.sisby.inventory_tabs.util.BlockUtil;
+import folk.sisby.inventory_tabs.util.PlayerUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class BlockTab implements Tab {
@@ -55,7 +57,14 @@ public class BlockTab implements Tab {
     @Override
     public void open(LocalPlayer player, ClientLevel world, AbstractContainerMenu handler, MultiPlayerGameMode interactionManager) {
         if (InventoryTabs.CONFIG.rotatePlayer) player.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(pos));
-        interactionManager.useItemOn(player, InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(pos), Direction.EAST, pos, false));
+        BlockHitResult hitResult = PlayerUtil.raycast(player, pos);
+        if (hitResult.getType() == HitResult.Type.MISS) {
+            Vec3 playerEye = player.getEyePosition();
+            Vec3 blockCenter = Vec3.atCenterOf(pos);
+            Direction side = Direction.getApproximateNearest(playerEye.subtract(blockCenter));
+            hitResult = new BlockHitResult(blockCenter, side, pos, false);
+        }
+        interactionManager.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
     }
 
     @Override
