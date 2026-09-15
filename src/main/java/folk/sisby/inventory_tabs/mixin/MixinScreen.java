@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Screen.class)
 public abstract class MixinScreen {
-	@Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At("TAIL"))
+	@Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements(IIF)V"))
 	private void renderTabs(GuiGraphicsExtractor drawContext, int mouseX, int mouseY, float delta, CallbackInfo ci) {
 		if ((Object) this instanceof InventoryTabsScreen screen && screen.inventoryTabs$allowTabs()) {
 			try {
