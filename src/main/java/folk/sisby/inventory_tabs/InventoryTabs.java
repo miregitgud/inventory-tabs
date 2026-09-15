@@ -1,6 +1,7 @@
 package folk.sisby.inventory_tabs;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import folk.sisby.inventory_tabs.api.InventoryTabsApi;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -51,7 +52,9 @@ public class InventoryTabs implements ClientModInitializer {
             String screenName = screen.getClass().getName();
             String menuName = screen.getMenu() != null ? screen.getMenu().getClass().getName() : "";
             if (screenName.contains("Backpack") || menuName.contains("Backpack") ||
-                    screenName.contains("travelersbackpack") || menuName.contains("travelersbackpack")) {
+                    screenName.contains("travelersbackpack") || menuName.contains("travelersbackpack") ||
+                    screenName.contains("inmis") || menuName.contains("inmis") ||
+                    screenName.contains("sophisticatedbackpacks") || menuName.contains("sophisticatedbackpacks")) {
                 for (folk.sisby.inventory_tabs.tabs.Tab tab : tabs) {
                     if (tab instanceof folk.sisby.inventory_tabs.tabs.EquippedBackpackTab) {
                         return tab;
@@ -60,5 +63,19 @@ public class InventoryTabs implements ClientModInitializer {
             }
             return null;
         });
+
+        invokeEntrypoints();
+    }
+
+    private void invokeEntrypoints() {
+        for (String entrypointKey : new String[]{"inventory_tabs", "inventory-tabs"}) {
+            FabricLoader.getInstance().getEntrypointContainers(entrypointKey, InventoryTabsApi.class).forEach(container -> {
+                try {
+                    container.getEntrypoint().onInit();
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to initialize InventoryTabsApi plugin from mod: {}", container.getProvider().getMetadata().getId(), t);
+                }
+            });
+        }
     }
 }

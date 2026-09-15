@@ -4,11 +4,11 @@ import folk.sisby.inventory_tabs.duck.InventoryTabsScreen;
 import folk.sisby.inventory_tabs.tabs.BlockTab;
 import folk.sisby.inventory_tabs.tabs.EntityTab;
 import folk.sisby.inventory_tabs.tabs.ItemTab;
-import folk.sisby.inventory_tabs.tabs.PlayerInventoryTab;
 import folk.sisby.inventory_tabs.tabs.Tab;
 import folk.sisby.inventory_tabs.tabs.VehicleInventoryTab;
 import folk.sisby.inventory_tabs.util.RaycastCache;
 import folk.sisby.inventory_tabs.util.HandlerSlotUtil;
+import folk.sisby.inventory_tabs.util.PlayerUtil;
 import folk.sisby.inventory_tabs.util.WidgetPosition;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,7 +19,6 @@ import java.util.function.BiFunction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -42,6 +41,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 public class TabManager {
     public static final Identifier BUTTONS_TEXTURE = InventoryTabs.id("textures/gui/buttons.png");
@@ -53,6 +53,8 @@ public class TabManager {
     public static final Map<Identifier, BiFunction<AbstractContainerScreen<?>, List<Tab>, Tab>> tabGuessers = new HashMap<>();
 
     public static Tab nextTab;
+    public static int tabSwitchTimeout = 0;
+    public static ClientLevel lastWorld = null;
     public static AbstractContainerScreen<?> currentScreen;
     public static final List<Tab> tabs = new ArrayList<>();
     public static int currentPage = 0;
@@ -72,6 +74,7 @@ public class TabManager {
     }
 
     public static void finishOpeningScreen(AbstractContainerMenu handler) {
+        tabSwitchTimeout = 0;
         if (nextTab != null) {
             try {
                 if (currentTab != null && currentTab != nextTab) currentTab.close(Minecraft.getInstance().player, Minecraft.getInstance().level, handler, Minecraft.getInstance().gameMode);
@@ -87,6 +90,7 @@ public class TabManager {
     }
 
     public static void screenDiscarded() {
+        tabSwitchTimeout = 0;
         if (currentTab != null) {
             Minecraft client = Minecraft.getInstance();
             if (client != null && client.player != null) {
@@ -101,8 +105,24 @@ public class TabManager {
     }
 
     public static void tick(ClientLevel world) {
+        if (world != lastWorld) {
+            blockRaycastCache.clear();
+            lastWorld = world;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null) {
+            double maxDistSq = (PlayerUtil.REACH + 2.0) * (PlayerUtil.REACH + 2.0);
+            blockRaycastCache.keySet().removeIf(pos -> Vec3.atCenterOf(pos).distanceToSqr(player.getEyePosition()) > maxDistSq);
+        }
         blockRaycastCache.values().removeIf(timer -> !timer.validThisTick && timer.ticksInvalid >= InventoryTabs.CONFIG.blockRaycastTimeout);
         blockRaycastCache.values().forEach(RaycastCache::tick);
+        if (nextTab != null) {
+            if (--tabSwitchTimeout <= 0) {
+                InventoryTabs.LOGGER.warn("Tab switch timed out for tab: {}, resetting lock", nextTab);
+                nextTab = null;
+                tabSwitchTimeout = 0;
+            }
+        }
         if (holdTabCooldown > 0) {
             if (InventoryTabs.NEXT_TAB.isDown() || (InventoryTabs.PREV_TAB != null && InventoryTabs.PREV_TAB.isDown())) {
                 holdTabCooldown--;
@@ -119,6 +139,7 @@ public class TabManager {
 
     public static void openTabImmediate(Tab tab, LocalPlayer player, MultiPlayerGameMode interactionManager, ClientLevel world) {
         nextTab = tab;
+        tabSwitchTimeout = Math.max(5, InventoryTabs.CONFIG.tabSwitchTimeout);
         try {
             if (currentScreen != null && currentScreen.getMenu() != null) {
                 HandlerSlotUtil.push(player, interactionManager, currentScreen.getMenu(), tab.isInstant());
@@ -131,6 +152,7 @@ public class TabManager {
         } catch (Throwable t) {
             InventoryTabs.LOGGER.error("Failed to open tab: {}", tab, t);
             nextTab = null;
+            tabSwitchTimeout = 0;
         }
     }
 
@@ -273,17 +295,19 @@ public class TabManager {
                 playClick();
                 return true;
             }
-        } else if (overTabs) {
+        } else if (overTabs && InventoryTabs.CONFIG.cycleTabsWithMouseWheel) {
             if (tabs.size() > 1) {
                 int currentIdx = tabs.indexOf(currentTab);
                 if (currentIdx == -1) currentIdx = 0;
                 if (verticalAmount < 0) {
                     int nextIdx = (currentIdx + 1) % tabs.size();
                     openTab(tabs.get(nextIdx));
+                    playClick();
                     return true;
                 } else if (verticalAmount > 0) {
                     int prevIdx = (currentIdx - 1 + tabs.size()) % tabs.size();
                     openTab(tabs.get(prevIdx));
+                    playClick();
                     return true;
                 }
             }
@@ -305,7 +329,7 @@ public class TabManager {
             if (!enabled) Minecraft.getInstance().gui.toastManager().addToast(new ControlHintToast(Component.translatable("toast.inventory_tabs.disabled.title").withStyle(ChatFormatting.BOLD), InventoryTabs.TOGGLE_TABS));
         }
         if (isHidden() || isLocked()) return false;
-        if (event.hasAltDown() && event.key() >= 49 && event.key() <= 57) { // Keys 1-9
+        if (InventoryTabs.CONFIG.altNumberShortcuts && event.hasAltDown() && event.key() >= 49 && event.key() <= 57) { // Keys 1-9
             int index = event.key() - 49;
             if (index < tabs.size()) {
                 openTab(tabs.get(index));
@@ -319,19 +343,21 @@ public class TabManager {
             if (isNext || isPrev) {
                 holdTabCooldown = InventoryTabs.CONFIG.holdTabCooldown;
                 boolean goBack = isPrev || event.hasShiftDown();
+                int currentIdx = tabs.indexOf(currentTab);
                 if (goBack) {
-                    if (tabs.indexOf(currentTab) <= 0) {
+                    if (currentIdx <= 0) {
                         openTab(tabs.get(tabs.size() - 1));
                     } else {
-                        openTab(tabs.get(tabs.indexOf(currentTab) - 1));
+                        openTab(tabs.get(currentIdx - 1));
                     }
                 } else {
-                    if (tabs.indexOf(currentTab) >= tabs.size() - 1) {
+                    if (currentIdx >= tabs.size() - 1 || currentIdx < 0) {
                         openTab(tabs.get(0));
                     } else {
-                        openTab(tabs.get(tabs.indexOf(currentTab) + 1));
+                        openTab(tabs.get(currentIdx + 1));
                     }
                 }
+                playClick();
                 return true;
             }
         }

@@ -13,6 +13,16 @@ public class InventoryTabsConfig extends WrappedConfig {
     @Comment("Can be lowered for shenanigans")
     public int holdTabCooldown = 3;
 
+    @Comment("Timeout in ticks to unlock tab switching if the server fails to open the requested container screen")
+    @IntegerRange(min = 5, max = 100)
+    public int tabSwitchTimeout = 30;
+
+    @Comment("Whether scrolling the mouse wheel over the tab area cycles between tabs")
+    public boolean cycleTabsWithMouseWheel = true;
+
+    @Comment("Whether pressing Alt+1 through Alt+9 opens the respective tab index")
+    public boolean altNumberShortcuts = true;
+
     @Comment("Whether to allow interacting with entities through blocks")
     @Comment("More seamless, but may be considered cheating by the server")
     public boolean ignoreWalls = true;
@@ -124,6 +134,7 @@ public class InventoryTabsConfig extends WrappedConfig {
             .put("travelersbackpack:*", "inventory_tabs:block_simple_storage")
             .put("#travelersbackpack:backpacks", "inventory_tabs:block_simple_storage")
             .put("#c:backpacks", "inventory_tabs:block_simple_storage")
+            .put("#c:storage_blocks", "inventory_tabs:block_simple_storage")
             .put("#c:crafting_tables", "inventory_tabs:block_unique")
             .put("#c:chests", "inventory_tabs:block_chest")
             .put("#c:wooden_chests", "inventory_tabs:block_chest")
@@ -157,6 +168,9 @@ public class InventoryTabsConfig extends WrappedConfig {
             .put("minecraft:dirt", "")
             .put("travelersbackpack:*", "inventory_tabs:item_unique")
             .put("#travelersbackpack:backpacks", "inventory_tabs:item_unique")
+            .put("#inmis:backpacks", "inventory_tabs:item_unique")
+            .put("inmis:*", "inventory_tabs:item_unique")
+            .put("sophisticatedbackpacks:*", "inventory_tabs:item_unique")
             .put("#c:backpacks", "inventory_tabs:item_unique")
             .build();
 

@@ -7,6 +7,7 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Multiset;
+import folk.sisby.inventory_tabs.api.InventoryTabsApi;
 import folk.sisby.inventory_tabs.providers.BlockTabProvider;
 import folk.sisby.inventory_tabs.providers.ChestBlockTabProvider;
 import folk.sisby.inventory_tabs.providers.EnderChestTabProvider;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -75,6 +77,15 @@ public class TabProviders {
 
     public static void reload(RegistryAccess manager) {
         InventoryTabs.LOGGER.info("[InventoryTabs] Reloading tab providers.");
+        for (String entrypointKey : new String[]{"inventory_tabs", "inventory-tabs"}) {
+            FabricLoader.getInstance().getEntrypointContainers(entrypointKey, InventoryTabsApi.class).forEach(container -> {
+                try {
+                    container.getEntrypoint().onRegisterTabProviders(TabProviders::register);
+                } catch (Throwable t) {
+                    InventoryTabs.LOGGER.error("Failed to register TabProviders via InventoryTabsApi plugin from mod: {}", container.getProvider().getMetadata().getId(), t);
+                }
+            });
+        }
         refreshConfigPlaceholders();
         if (InventoryTabs.CONFIG.configLogging) {
             Map<String, List<ResourceKey<MenuType<?>>>> types = manager.lookupOrThrow(Registries.MENU).listElementIds().filter(k -> ScreenSupport.allowTabs(k) == null && InventoryTabs.CONFIG.allowScreensByDefault).collect(Collectors.groupingBy(k -> k.identifier().getNamespace()));

@@ -60,7 +60,9 @@ public class ScreenSupport {
             String screenClass = hs.getClass().getName();
             String menuClass = hs.getMenu() != null ? hs.getMenu().getClass().getName() : "";
             return screenClass.contains("Backpack") || menuClass.contains("Backpack") ||
-                    screenClass.contains("travelersbackpack") || menuClass.contains("travelersbackpack");
+                    screenClass.contains("travelersbackpack") || menuClass.contains("travelersbackpack") ||
+                    screenClass.contains("inmis") || menuClass.contains("inmis") ||
+                    screenClass.contains("sophisticatedbackpacks") || menuClass.contains("sophisticatedbackpacks");
         });
         InventoryTabs.CONFIG.leftBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.put(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), new Tuple<>(offset, 0)));
         InventoryTabs.CONFIG.rightBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.merge(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), new Tuple<>(0, offset), (o, n) -> new Tuple<>(o.getA(), n.getB())));
