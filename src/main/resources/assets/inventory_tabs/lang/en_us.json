@@ -5,6 +5,5 @@
   "toast.inventory_tabs.disabled.title": "Inventory Tabs Disabled",
   "toast.inventory_tabs.disabled.key_hint": "[Press %s to toggle]",
   "gui.inventory_tabs.tab.inventory": "Inventory",
-  "gui.inventory_tabs.tab.equipped_backpack": "Backpack",
   "gui.inventory_tabs.page_indicator": "%1$s/%2$s"
 }

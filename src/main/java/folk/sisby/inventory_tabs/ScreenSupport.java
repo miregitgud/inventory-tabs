@@ -56,14 +56,6 @@ public class ScreenSupport {
     static {
         DENY.put(InventoryTabs.id("creative_screen"), hs -> hs instanceof CreativeModeInventoryScreen);
         ALLOW.put(InventoryTabs.id("horse_screen"), hs -> hs instanceof HorseInventoryScreen);
-        ALLOW.put(InventoryTabs.id("backpack_screen"), hs -> {
-            String screenClass = hs.getClass().getName();
-            String menuClass = hs.getMenu() != null ? hs.getMenu().getClass().getName() : "";
-            return screenClass.contains("Backpack") || menuClass.contains("Backpack") ||
-                    screenClass.contains("travelersbackpack") || menuClass.contains("travelersbackpack") ||
-                    screenClass.contains("inmis") || menuClass.contains("inmis") ||
-                    screenClass.contains("sophisticatedbackpacks") || menuClass.contains("sophisticatedbackpacks");
-        });
         InventoryTabs.CONFIG.leftBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.put(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), new Tuple<>(offset, 0)));
         InventoryTabs.CONFIG.rightBoundOffsetOverride.forEach((screenHandlerId, offset) -> SCREEN_BOUND_OFFSETS.merge(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), new Tuple<>(0, offset), (o, n) -> new Tuple<>(o.getA(), n.getB())));
         InventoryTabs.CONFIG.invertedTabsOverride.forEach((screenHandlerId, doInvert) -> SCREEN_INVERTS.put(screenHandlerId.equals("null") ? null : Identifier.parse(screenHandlerId), doInvert));

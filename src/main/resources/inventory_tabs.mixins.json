@@ -9,7 +9,6 @@
 		"MixinGenericContainerScreen",
 		"MixinGenericContainerScreenHandler",
 		"MixinHandledScreen",
-		"MixinKeyBinding",
 		"MixinMinecraftClient",
 		"MixinMouse",
 		"MixinScreen",
